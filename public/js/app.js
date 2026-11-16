@@ -1,6 +1,7 @@
 /* Makerade Destockage — interactions */
 (() => {
   'use strict';
+  const B = window.MK_BASE || '';
   const $ = (s, c = document) => c.querySelector(s);
   const $$ = (s, c = document) => [...c.querySelectorAll(s)];
   const money = n => '$' + Number(n).toFixed(2);
@@ -55,7 +56,7 @@
       add.innerHTML = '✓ Ajouté';
       setTimeout(() => { add.classList.remove('added'); add.innerHTML = add.dataset.old; }, 1300);
       flyToCart(add);
-      if (window.mkAdded) window.mkAdded(id); else toast(`<b>${CATALOG[id]?.name || 'Article'}</b> ajouté au panier.`, ['Voir le panier', '/cart']);
+      if (window.mkAdded) window.mkAdded(id); else toast(`<b>${CATALOG[id]?.name || 'Article'}</b> ajouté au panier.`, ['Voir le panier', B + '/cart']);
       return;
     }
     const wish = e.target.closest('[data-wish]');
@@ -145,7 +146,7 @@
   si?.addEventListener('input', () => {
     const q = si.value.trim().toLowerCase(); if (q.length < 2) { sg.hidden = true; return; }
     const res = Object.values(CATALOG).filter(p => (p.name + ' ' + p.brand + ' ' + p.variant).toLowerCase().includes(q)).slice(0, 5);
-    sg.innerHTML = res.length ? res.map(p => `<a href="/product/${p.slug}">${p.image ? `<img class="art photo" src="${p.image}" alt="">` : `<svg class="art" style="width:34px;height:40px" viewBox="0 0 120 140"><rect x="30" y="20" width="60" height="100" rx="12" fill="${p.c1}"/></svg>`}<span><b>${p.name}</b><small>${p.variant} · ${money(p.price)}</small></span></a>`).join('') : '<div class="none">Aucun produit trouvé</div>';
+    sg.innerHTML = res.length ? res.map(p => `<a href="${B}/product/${p.slug}/">${p.image ? `<img class="art photo" src="${p.image}" alt="">` : `<svg class="art" style="width:34px;height:40px" viewBox="0 0 120 140"><rect x="30" y="20" width="60" height="100" rx="12" fill="${p.c1}"/></svg>`}<span><b>${p.name}</b><small>${p.variant} · ${money(p.price)}</small></span></a>`).join('') : '<div class="none">Aucun produit trouvé</div>';
     sg.hidden = false;
   });
 
@@ -176,7 +177,7 @@
     if (!list) return;
     const ids = Object.keys(store.cart).filter(k => CATALOG[k]);
     if (!ids.length) {
-      list.innerHTML = `<div class="empty"><svg class="ic" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 10.5h10.5L20.500 7H6.200"/><circle cx="9" cy="19" r="1.500"/><circle cx="17" cy="19" r="1.500"/></svg><h3>Votre panier est vide</h3><p>Vous n'avez encore rien ajouté.</p><a class="btn btn-primary" href="/shop">Commencer mes achats</a></div>`;
+      list.innerHTML = `<div class="empty"><svg class="ic" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 10.5h10.5L20.500 7H6.200"/><circle cx="9" cy="19" r="1.500"/><circle cx="17" cy="19" r="1.500"/></svg><h3>Votre panier est vide</h3><p>Vous n'avez encore rien ajouté.</p><a class="btn btn-primary" href="${B}/shop/">Commencer mes achats</a></div>`;
     } else {
       list.innerHTML = ids.map(id => {
         const p = CATALOG[id], q = store.cart[id], art = $(`[data-art="${id}"]`)?.innerHTML || '';

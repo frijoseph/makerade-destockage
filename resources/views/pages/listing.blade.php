@@ -6,9 +6,9 @@
 <section class="container section tight">
     <div class="toolbar reveal">
         <div class="chips">
-            <a href="{{ url()->current() }}" class="chip {{ !$cat || $cat === 'all' ? 'on' : '' }}">Tous</a>
+            <a href="{{ route(Route::currentRouteName()) }}" class="chip {{ !$cat || $cat === 'all' ? 'on' : '' }}">Tous</a>
             @foreach ($categories as $c)
-                <a href="{{ url()->current() }}?cat={{ $c['slug'] }}" class="chip {{ ($cat ?? '') === $c['slug'] ? 'on' : '' }}">{{ $c['slug'] === 'all' ? 'Tous' : $c['name'] }}</a>
+                <a href="{{ route(Route::currentRouteName(), ['cat' => $c['slug']]) }}" class="chip {{ ($cat ?? '') === $c['slug'] ? 'on' : '' }}">{{ $c['slug'] === 'all' ? 'Tous' : $c['name'] }}</a>
             @endforeach
         </div>
         <label class="sort"><span>Trier par</span>

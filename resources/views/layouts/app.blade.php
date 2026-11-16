@@ -29,6 +29,7 @@
 @include('partials.footer')
 
 <script id="catalog" type="application/json">{!! json_encode(collect(\App\Support\Catalog::products())->keyBy("slug")->all(), JSON_HEX_TAG) !!}</script>
+<script>window.MK_BASE="{{ rtrim(url('/'), '/') }}";</script>
 <div class="toast-wrap" id="toasts" aria-live="polite"></div>
 <button class="to-top" id="toTop" aria-label="Retour en haut"><x-icon name="chev-down" style="transform:rotate(180deg)" /></button>
 

@@ -8,6 +8,7 @@
   document.documentElement.classList.add('js');
   let CAT = {}; try { CAT = JSON.parse($('#catalog').textContent); } catch (e) {}
   const page = document.body.dataset.page;
+  const B = window.MK_BASE || '';
 
   /* ---------- compte à rebours des ventes flash (jusqu'à minuit) ---------- */
   $$('[data-countdown]').forEach(box => {
@@ -44,7 +45,7 @@
     <div class="mini-body" id="miniBody"></div>
     <div class="mini-f"><div class="ship-bar"><i id="miniBar"></i></div><p class="ship-note" id="miniNote"></p>
     <div class="srow total"><span>Sous-total</span><b id="miniTotal">$0.00</b></div>
-    <a href="/cart" class="btn btn-ghost block">Voir le panier</a><a href="/cart" class="btn btn-primary block">Commander</a></div>`;
+    <a href="${B}/cart/" class="btn btn-ghost block">Voir le panier</a><a href="${B}/cart/" class="btn btn-primary block">Commander</a></div>`;
   const scrim = document.createElement('div'); scrim.className = 'mini-scrim';
   document.body.append(scrim, el);
   const open = () => document.body.classList.add('mini-open'), close = () => document.body.classList.remove('mini-open');
@@ -88,7 +89,7 @@
       const ps = Object.values(CAT); if (!ps.length || document.hidden) return schedule();
       const p = ps[(Math.random() * ps.length) | 0], n = $('.sale'); if (n) n.remove();
       const box = document.createElement('div'); box.className = 'sale';
-      box.innerHTML = `${p.image ? `<img src="${p.image}" alt="">` : ''}<div><b>${names[(Math.random() * names.length) | 0]}</b> de ${cities[(Math.random() * cities.length) | 0]} vient d'acheter<br><a href="/product/${p.slug}">${p.name}</a><small><span class="ok">✔ Achat vérifié</span> · il y a ${1 + ((Math.random() * 9) | 0)} min</small></div><button aria-label="Fermer">✕</button>`;
+      box.innerHTML = `${p.image ? `<img src="${p.image}" alt="">` : ''}<div><b>${names[(Math.random() * names.length) | 0]}</b> de ${cities[(Math.random() * cities.length) | 0]} vient d'acheter<br><a href="${B}/product/${p.slug}/">${p.name}</a><small><span class="ok">✔ Achat vérifié</span> · il y a ${1 + ((Math.random() * 9) | 0)} min</small></div><button aria-label="Fermer">✕</button>`;
       document.body.appendChild(box);
       requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add('show')));
       const hide = () => { box.classList.remove('show'); setTimeout(() => box.remove(), 700); };
@@ -112,4 +113,13 @@
     };
     setTimeout(tick, 1200);
   }
+})();
+
+/* recherche (?q=) côté navigateur : utile pour la version statique */
+(() => {
+  const q = new URLSearchParams(location.search).get('q'), grid = document.querySelector('#pgrid');
+  if (!q || !grid) return;
+  const t = q.toLowerCase(); let n = 0;
+  grid.querySelectorAll('.grid-item').forEach(g => { const ok = g.textContent.toLowerCase().includes(t); g.hidden = !ok; if (ok) n++; });
+  const c = document.querySelector('.count b'); if (c) c.textContent = n;
 })();
