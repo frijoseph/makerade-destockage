@@ -1,0 +1,146 @@
+/* =====================================================================
+   ANIMATIONS « soin de la maison » + diaporama + sections dynamiques
+   ===================================================================== */
+.fcats{grid-template-columns:repeat(8,1fr)}
+@media (max-width:1100px){.fcats{grid-template-columns:repeat(4,1fr)}}
+
+/* ---------- Diaporama du hero ---------- */
+.fhero{background:#f8f6f5}
+.fhero .hero-track{position:absolute;inset:0;display:grid}
+.fhero .slide{grid-area:1/1;position:relative;display:flex;align-items:center;min-height:0;height:100%;opacity:0;visibility:hidden;transition:opacity .9s ease,visibility .9s}
+.fhero .slide.is-active{opacity:1;visibility:visible;z-index:2}
+.fs1{background:linear-gradient(90deg,#f8f6f5 0%,#f6f5ef 55%,#eef0e5 100%)}
+.fs2{background:linear-gradient(90deg,#fdf6ef,#fae8d7)}
+.fs3{background:linear-gradient(90deg,#fbf6ee,#f8eee2)}
+.fhero .eyebrow,.fhero h1,.fhero .fh-p,.fhero .fh-btn,.fhero .fh-perks,.fhero .fh-script{animation:none;opacity:0;transform:translateY(26px)}
+.fhero .slide.is-active .eyebrow{animation:up .8s .15s var(--ease) forwards}
+.fhero .slide.is-active h1{animation:up .9s .28s var(--ease) forwards}
+.fhero .slide.is-active .fh-p{animation:up .9s .42s var(--ease) forwards}
+.fhero .slide.is-active .fh-btn{animation:up .9s .56s var(--ease) forwards}
+.fhero .slide.is-active .fh-perks{animation:up .9s .7s var(--ease) forwards}
+.fhero .slide.is-active .fh-script{animation:scr .9s 1s var(--ease) forwards}
+@keyframes scr{from{opacity:0;transform:rotate(-9deg) translateY(20px)}to{opacity:1;transform:rotate(-9deg)}}
+.fhero .fhero-img{position:absolute;right:0;top:0;height:100%;aspect-ratio:444/262;opacity:0;animation:none;overflow:hidden}
+.fhero .slide.is-active .fhero-img{animation:fh-in 1.2s .1s var(--ease) forwards}
+.fhero .slide.is-active .fhero-img>img:first-child{animation:kb 16s ease-out forwards}
+@keyframes kb{from{transform:scale(1.1)}to{transform:scale(1)}}
+.fhero .fhero-img.alt{aspect-ratio:auto;width:48%}
+.fhero .fhero-img.alt>img:first-child{object-fit:cover;object-position:center}
+.fh-badge{animation:bob 5s ease-in-out infinite}
+.fh-disc{position:absolute;left:12%;top:9%;width:clamp(86px,8.6vw,128px);aspect-ratio:1;border-radius:50%;background:#f6e75a;color:#141414;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;box-shadow:0 8px 18px -8px rgba(0,0,0,.4);animation:bob 4.5s ease-in-out infinite,wob 6s ease-in-out infinite}
+.fh-disc small{font-size:clamp(8px,.8vw,12px);font-weight:700}.fh-disc b{font-size:clamp(20px,2.4vw,36px);font-weight:800}.fh-disc span{font-size:clamp(8px,.8vw,12px);font-weight:700}
+@keyframes wob{0%,100%{rotate:0deg}50%{rotate:8deg}}
+.hero-arrow{z-index:7}
+.hero-dots{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:9px;z-index:7}
+.hero-dots button{width:9px;height:9px;border-radius:9px;background:#cfd4cf;transition:.4s var(--ease)}
+.hero-dots button.on{width:30px;background:var(--g)}
+.hero-progress{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(0,0,0,.06);z-index:7}
+.hero-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--g),#7ed957)}
+.fhero:hover #heroBar{animation-play-state:paused}
+@keyframes hbar{from{width:0}to{width:100%}}
+
+/* mot qui défile */
+.rot{display:inline-block;height:1.06em;overflow:hidden;vertical-align:bottom}
+.rot-in{display:flex;flex-direction:column;animation:rot 10s var(--ease) infinite}
+.rot-in em{display:block;height:1.06em;line-height:1.06;font-style:normal;color:var(--g-2);white-space:nowrap}
+@keyframes rot{0%,20%{transform:translateY(0)}25%,45%{transform:translateY(-1.06em)}50%,70%{transform:translateY(-2.12em)}75%,95%{transform:translateY(-3.18em)}100%{transform:translateY(-4.24em)}}
+
+/* ---------- Bulles de savon + étincelles ---------- */
+.bubbles{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:4}
+.bubble{position:absolute;bottom:-70px;border-radius:50%;pointer-events:auto;cursor:pointer;
+  background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.98),rgba(255,255,255,.28) 34%,rgba(130,205,255,.16) 62%,rgba(255,255,255,.55) 100%);
+  border:1px solid rgba(110,180,235,.45);box-shadow:inset 0 0 10px rgba(255,255,255,.75),0 3px 10px rgba(80,160,220,.18);
+  animation:rise var(--dur,10s) linear forwards;will-change:transform}
+.bubble::after{content:"";position:absolute;left:22%;top:16%;width:22%;height:14%;border-radius:50%;background:rgba(255,255,255,.95);transform:rotate(-30deg)}
+@keyframes rise{0%{transform:translate(0,0) scale(.55);opacity:0}8%{opacity:1}50%{transform:translate(var(--dx),calc(var(--rise)*-.5)) scale(1)}100%{transform:translate(calc(var(--dx)*-.6),calc(var(--rise)*-1)) scale(1.05);opacity:.9}}
+.bubble.pop{animation:popb .35s ease-out forwards!important}
+@keyframes popb{0%{transform:scale(1)}50%{transform:scale(1.5);opacity:.8}100%{transform:scale(2);opacity:0}}
+.stats .bubble,.newsband .bubble{border-color:rgba(255,255,255,.55)}
+.sparkles{position:absolute;inset:0;pointer-events:none;z-index:3}
+.sp{position:absolute;width:var(--s,14px);height:var(--s,14px);background:#fff;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);filter:drop-shadow(0 0 5px #fff);opacity:0;animation:twinkle var(--t,2.6s) ease-in-out infinite;animation-delay:var(--dl,0s)}
+@keyframes twinkle{0%,100%{transform:scale(0) rotate(0);opacity:0}50%{transform:scale(1) rotate(60deg);opacity:1}}
+.trail{position:fixed;z-index:60;border-radius:50%;pointer-events:none;border:1px solid rgba(110,180,235,.5);background:radial-gradient(circle at 30% 30%,#fff,rgba(130,205,255,.2));animation:trail 1.1s ease-out forwards}
+@keyframes trail{to{transform:translate(var(--tx),-60px) scale(.2);opacity:0}}
+.burst{position:fixed;z-index:400;border-radius:50%;pointer-events:none;border:1px solid rgba(110,180,235,.6);background:radial-gradient(circle at 30% 30%,#fff,rgba(130,205,255,.25));animation:burst .9s ease-out forwards}
+@keyframes burst{to{transform:translate(var(--bx),var(--by)) scale(.3);opacity:0}}
+
+/* ---------- Bannières : balayage « essuyage » ---------- */
+.fb-peach2{background:#fae8d7}.fb-pink{background:#fee5e8}.fb-gold{background:#fdf6df}
+.fb-peach2 .fb-img,.fb-cream .fb-img{width:46%;height:100%;object-fit:cover;object-position:right bottom}
+.fb-peach2 .fb-disc{left:auto;right:5%;top:8%}
+.fb-cream .fb-script{left:auto;right:7%;top:8%}
+.fb-pct{position:absolute;right:30%;top:12%;width:34px;height:34px;border-radius:50%;background:var(--g);color:#fff;font-weight:800;display:grid;place-items:center;z-index:3;animation:bob 3s ease-in-out infinite}
+.wipe{isolation:isolate}
+.wipe .fb-img{clip-path:inset(0 100% 0 0)}
+.wipe.in .fb-img{animation:wipe 1.1s .2s var(--ease) forwards}
+@keyframes wipe{to{clip-path:inset(0 0 0 0)}}
+.wipe::after{content:"";position:absolute;top:-10%;bottom:-10%;left:-45%;width:32%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.7),transparent);transform:skewX(-20deg);z-index:5;pointer-events:none}
+.wipe.in::after{animation:streak 1.3s .25s ease-out}
+@keyframes streak{from{left:-45%}to{left:130%}}
+.fb:hover .fb-img{transform:scale(1.05)}
+
+/* ---------- Cartes produit ---------- */
+.pimg::after{content:"";position:absolute;top:0;bottom:0;left:-70%;width:40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.85),transparent);transform:skewX(-20deg);pointer-events:none}
+.pcard:hover .pimg::after{animation:streak .9s ease-out}
+.pcard .pimg .art,.fb .fb-img{will-change:translate}
+.btn-add{position:relative;overflow:hidden}
+.btn-add::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(255,255,255,.35),transparent 60%);transform:scale(0);transition:transform .5s}
+.btn-add:hover::before{transform:scale(2.2)}
+.fcat:hover .fcat-c{animation:wob2 .7s var(--ease)}
+@keyframes wob2{0%{transform:translateY(0) rotate(0)}30%{transform:translateY(-8px) rotate(-6deg)}60%{transform:translateY(-4px) rotate(4deg)}100%{transform:translateY(-5px) rotate(0)}}
+.why-i:hover .why-c .ic{animation:wob2 .7s}
+
+/* ---------- Chiffres ---------- */
+.stats{position:relative;display:grid;grid-template-columns:repeat(4,1fr);background:linear-gradient(120deg,#073f20,#0f6a26 55%,#1b8a3a);border-radius:14px;padding:34px 20px;color:#fff;overflow:hidden;text-align:center}
+.stat{position:relative;z-index:5}.stat+.stat{border-left:1px solid rgba(255,255,255,.16)}
+.stat b{display:block;font-size:clamp(30px,3.6vw,52px);font-weight:800;letter-spacing:-1.5px;line-height:1.1}
+.stat small{display:block;font-size:13px;color:#d6ecda;margin-top:4px;padding:0 10px}
+
+/* ---------- Test de propreté ---------- */
+.cleantest{display:grid;grid-template-columns:1fr 1.05fr;gap:36px;align-items:center;background:linear-gradient(120deg,#f2f8ef,#fff);border:1px solid #e3eee0;border-radius:16px;padding:30px 34px}
+.ct-txt h2{font-size:clamp(24px,2.4vw,34px);font-weight:800;letter-spacing:-.8px;margin:12px 0 8px}
+.ct-txt p{color:#4a554e;max-width:430px;line-height:1.55}
+.spark{display:inline-block;animation:twinkle2 1.8s ease-in-out infinite}
+@keyframes twinkle2{50%{transform:scale(1.3) rotate(15deg)}}
+.ct-meter{height:9px;background:#dfe8db;border-radius:9px;overflow:hidden;margin:20px 0 8px;max-width:340px}
+.ct-meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--g),#7ed957);border-radius:9px;transition:width .3s}
+#ctPct{font-size:12.5px;color:#5c6860;font-weight:600}
+.ct-cta{margin-top:18px;opacity:.35;pointer-events:none;transition:opacity .6s,transform .3s;animation:none!important}
+.cleantest.done .ct-cta{opacity:1!important;pointer-events:auto}
+.ct-stage{position:relative;border-radius:14px;overflow:hidden;width:100%;max-width:470px;justify-self:end;aspect-ratio:496/412;box-shadow:0 24px 40px -22px rgba(20,60,30,.5);cursor:crosshair;touch-action:none;background:#fae8d7}
+.ct-stage img{display:block;width:100%;height:100%;object-fit:cover}
+.ct-stage canvas{position:absolute;inset:0;width:100%;height:100%;transition:opacity 1s}
+.ct-stage.clean canvas{opacity:0;pointer-events:none}
+.ct-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,.85);padding:8px 18px;border-radius:99px;font-weight:700;font-size:14px;pointer-events:none;animation:bob 2.5s ease-in-out infinite;transition:opacity .4s}
+.ct-stage.touched .ct-hint{opacity:0}
+
+/* ---------- Marques en défilement ---------- */
+.marquee{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
+.marquee-in{display:flex;width:max-content;animation:mq 32s linear infinite}
+.marquee:hover .marquee-in{animation-play-state:paused}
+.mq-item{width:170px;flex:none;margin-right:16px}
+@keyframes mq{to{transform:translateX(-50%)}}
+
+/* ---------- Écran d'accueil (première visite) ---------- */
+.splash{display:none}
+.splash-on .splash{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:linear-gradient(160deg,#f2f9ef,#fff);transition:opacity .8s,visibility .8s}
+.splash.hide{opacity:0;visibility:hidden}
+.splash img{position:relative;z-index:5;width:150px;height:auto;animation:spl 1.4s var(--ease) both}
+.splash .bubbles{z-index:2}
+@keyframes spl{0%{transform:scale(.3) rotate(-20deg);opacity:0}60%{transform:scale(1.1) rotate(4deg);opacity:1}100%{transform:none}}
+.fhero-img{will-change:translate}
+
+@media (max-width:1024px){
+  .fhero .hero-track{position:relative;inset:auto}
+  .fhero .slide{flex-direction:column-reverse;height:auto;align-items:stretch}
+  .fhero .fhero-img{position:relative;width:100%;height:auto;aspect-ratio:444/262}
+  .fhero .fhero-img.alt{width:100%;aspect-ratio:16/10}
+  .fhero .fh-script{display:none}
+  .fhero .fh-txt{padding-bottom:6px}
+  .hero-dots{bottom:auto;top:auto;position:static;transform:none;justify-content:center;padding:10px 0 14px}
+  .hero-progress{display:none}
+  .stats{grid-template-columns:1fr 1fr;row-gap:22px}.stat:nth-child(3){border-left:0}
+  .cleantest{grid-template-columns:1fr;padding:22px}.ct-stage{justify-self:center}
+}
+@media (max-width:720px){.hero-arrow{display:none}.mq-item{width:140px}.cleantest{gap:20px}.stat b{font-size:30px}}
+@media (prefers-reduced-motion:reduce){.bubble,.sp,.rot-in,.marquee-in,.fh-badge,.fh-disc{animation:none!important}.wipe .fb-img{clip-path:none}}
