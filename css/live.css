@@ -1,0 +1,95 @@
+/* =====================================================================
+   Interactions « e-commerce vivant » : ventes flash, panier latéral,
+   quantité sur la carte, notifications d'achat, chargement doux.
+   ===================================================================== */
+
+/* ---------- En-tête compact au défilement + menu au survol ---------- */
+.header-main,.logo img{transition:height .35s var(--ease),padding .35s}
+.header.stuck .header-main{height:66px}
+.header.stuck .logo img{height:46px}
+.header.stuck .subnav-in{height:44px}
+.subnav-in{transition:height .35s var(--ease)}
+.catdrop::before{content:"";position:absolute;left:0;right:0;top:-16px;height:16px}
+@media (hover:hover){
+  .catmenu:hover .catdrop{opacity:1;visibility:visible;transform:none}
+  .catmenu:hover .caret{transform:rotate(180deg)}
+}
+
+/* ---------- Ventes flash ---------- */
+.flash-h{display:flex;align-items:center;gap:26px;background:linear-gradient(90deg,#0a5226,#15833b);color:#fff;padding:14px 22px;border-radius:12px 12px 0 0;flex-wrap:wrap}
+.fl-t{display:flex;align-items:center;gap:10px}
+.fl-t h2{font-size:22px;font-weight:800;letter-spacing:-.4px}
+.bolt{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#f6e75a;color:#111;font-size:18px;animation:zap 1.4s ease-in-out infinite}
+@keyframes zap{0%,100%{transform:scale(1) rotate(0);box-shadow:0 0 0 0 rgba(246,231,90,.7)}50%{transform:scale(1.12) rotate(-8deg);box-shadow:0 0 0 10px rgba(246,231,90,0)}}
+.fl-time{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:500;color:#dff3e3}
+.cd{display:inline-flex;align-items:center;gap:5px;perspective:300px}
+.cd b{display:inline-block;min-width:38px;padding:6px 7px;background:#0b1a10;color:#fff;border-radius:6px;font-size:18px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
+.cd i{font-style:normal;font-weight:800;color:#f6e75a}
+.cd b.flip{animation:flipd .45s var(--ease)}
+@keyframes flipd{0%{transform:rotateX(90deg);opacity:.2}100%{transform:none;opacity:1}}
+.fl-all{margin-left:auto;display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:13px;color:#fff;border-bottom:1.5px solid rgba(255,255,255,.6);padding-bottom:2px}
+.fl-all:hover{color:#f6e75a;border-color:#f6e75a}
+.flashgrid{background:#f3faf3;padding:16px;border-radius:0 0 12px 12px;border:1px solid #dcecdc;border-top:0}
+.flashgrid .off{background:#e8452c;animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.stock{height:7px;background:#e8ece8;border-radius:7px;overflow:hidden;margin:2px 0 5px}
+.stock i{display:block;height:100%;width:0;border-radius:7px;background:repeating-linear-gradient(135deg,#f5a623 0 8px,#f08a1c 8px 16px);background-size:200% 100%;transition:width 1.6s var(--ease) .3s;animation:stripes 1.2s linear infinite}
+.pcard.in .stock i{width:var(--w)}
+@keyframes stripes{to{background-position:32px 0}}
+.stock-t{display:block;font-size:11px;color:#c0392b;font-weight:700;margin-bottom:8px}
+
+/* ---------- Quantité sur la carte ---------- */
+.stepper{display:none;align-items:center;justify-content:space-between;height:38px;margin-top:auto;background:#e6f4ea;border-radius:5px;padding:0 4px}
+.stepper button{width:32px;height:30px;border-radius:5px;background:var(--g);color:#fff;font-size:19px;line-height:1;display:grid;place-items:center;transition:.2s}
+.stepper button:hover{background:var(--g-d);transform:scale(1.08)}
+.stepper b{font-weight:800;font-size:14px}
+.pcard.has-qty .stepper{display:flex;animation:pop .35s var(--ease)}
+.pcard.has-qty .btn-add{display:none}
+.pcard.has-qty{box-shadow:0 0 0 2px var(--g),0 14px 26px -16px rgba(15,106,38,.5)}
+
+/* ---------- Chargement doux des images ---------- */
+.js .pimg img.art.photo,.js .fcat-c img{opacity:0;transition:opacity .7s ease,transform .5s var(--ease)}
+.js .pimg img.art.photo.loaded,.js .fcat-c img.loaded{opacity:1}
+.pimg.skel,.fcat-c.skel{position:relative;background:linear-gradient(100deg,#f1f3f1 30%,#fafbfa 50%,#f1f3f1 70%);background-size:200% 100%;animation:shim 1.3s linear infinite}
+@keyframes shim{to{background-position:-200% 0}}
+
+/* ---------- Panier latéral ---------- */
+.mini-scrim{position:fixed;inset:0;background:rgba(8,25,15,.45);backdrop-filter:blur(2px);opacity:0;visibility:hidden;transition:.3s;z-index:190}
+.mini{position:fixed;top:0;right:0;bottom:0;width:min(410px,92vw);background:#fff;z-index:200;display:flex;flex-direction:column;transform:translateX(105%);transition:transform .5s var(--ease);box-shadow:-24px 0 60px -24px rgba(0,0,0,.35)}
+body.mini-open .mini{transform:none}
+body.mini-open .mini-scrim{opacity:1;visibility:visible}
+body.mini-open{overflow:hidden}
+.mini-h{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+.mini-h h3{font-size:18px;font-weight:800}.mini-h span{color:var(--g);font-weight:800}
+.mini-body{flex:1;overflow:auto;padding:8px 20px}
+.mi{display:grid;grid-template-columns:62px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #f0f2f0;animation:up .45s var(--ease) both}
+.mi img,.mi .ph{width:62px;height:62px;object-fit:contain;background:#f6f7f5;border-radius:10px;mix-blend-mode:multiply}
+.mi b{font-size:13px;display:block;line-height:1.3}.mi small{display:block;font-size:11.5px;color:var(--mut)}
+.mi .mp{font-weight:800;font-size:14px;margin-top:3px;display:block}
+.mi-r{display:grid;justify-items:end;gap:8px}
+.mi-q{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:8px;height:30px}
+.mi-q button{width:28px;height:100%;display:grid;place-items:center;font-size:16px}.mi-q button:hover{color:var(--g)}
+.mi-q span{min-width:20px;text-align:center;font-weight:700;font-size:13px}
+.mi-x{font-size:11.5px;color:#9aa39e}.mi-x:hover{color:#e0364b}
+.mini-empty{text-align:center;padding:60px 10px;color:var(--mut)}
+.mini-empty .big{font-size:46px;display:block;margin-bottom:6px;animation:bob 3s ease-in-out infinite}
+.mini-f{padding:16px 20px 20px;border-top:1px solid var(--line);display:grid;gap:12px;background:#fbfcfb}
+.mini-f .srow.total{padding-top:10px}
+
+/* ---------- Notifications d'achat ---------- */
+.sale{position:fixed;left:20px;bottom:84px;z-index:120;display:flex;gap:12px;align-items:center;background:#fff;border-radius:12px;padding:10px 34px 10px 10px;box-shadow:0 18px 40px -14px rgba(0,0,0,.35);max-width:340px;font-size:12.5px;line-height:1.4;border-left:4px solid var(--g);transform:translateX(-130%);transition:transform .65s var(--ease)}
+.sale.show{transform:none}
+.sale img{width:48px;height:48px;object-fit:contain;background:#f6f7f5;border-radius:8px;mix-blend-mode:multiply;flex:none}
+.sale a{font-weight:700;color:var(--g)}
+.sale small{display:block;color:#8a938d;font-size:11px;margin-top:1px}
+.sale .ok{color:var(--g);font-weight:700}
+.sale button{position:absolute;top:6px;right:8px;color:#aab2ad;font-size:14px}
+@media (max-width:720px){.sale{left:12px;right:12px;max-width:none;bottom:78px}.flash-h{gap:12px}.fl-all{margin-left:0}.flashgrid{padding:10px}}
+
+/* ---------- Photos nettes (CC0) ---------- */
+.ct-stage{aspect-ratio:16/10;max-width:520px}
+.ct-stage img{object-fit:cover}
+.fhero .fhero-img.alt{width:50%}
+.fhero .fhero-img.alt>img:first-child{object-position:center}
+.fb-pink .fb-img{width:52%;height:100%;object-fit:cover;object-position:center}
+.fb-peach2 .fb-img,.fb-cream .fb-img{width:52%;object-position:center}
