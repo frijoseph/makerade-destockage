@@ -7,6 +7,7 @@ use App\Http\Requests\ProductRequest;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Setting;
 use App\StockMovementType;
 use App\Support\Inventory;
 use Illuminate\Http\RedirectResponse;
@@ -26,16 +27,31 @@ class ProductController extends Controller
                 ->orWhere('sku', 'like', "%{$search}%")
                 ->orWhere('variant', 'like', "%{$search}%")))
             ->when($request->query('category'), fn ($query, $category) => $query->where('category_id', $category))
+            ->when($request->query('brand'), fn ($query, $brand) => $brand === 'none' ? $query->whereNull('brand_id') : $query->where('brand_id', $brand))
+            ->when($request->query('promo') === '1', fn ($query) => $query->whereNotNull('old_price')->whereColumn('old_price', '>', 'price'))
             ->when($request->query('stock') === 'low', fn ($query) => $query->lowStock())
             ->when($request->query('status') === 'inactive', fn ($query) => $query->where('is_active', false))
             ->when($request->query('status') === 'active', fn ($query) => $query->where('is_active', true))
-            ->orderBy($request->query('sort') === 'stock' ? 'stock' : 'name')
+            ->when(true, fn ($query) => match ($request->query('sort')) {
+                'stock' => $query->orderBy('stock'),
+                'price_asc' => $query->orderBy('price'),
+                'price_desc' => $query->orderByDesc('price'),
+                'recent' => $query->latest('id'),
+                default => $query->orderBy('name'),
+            })
             ->paginate(20)
             ->withQueryString();
 
         return view('admin.products.index', [
+            'stats' => [
+                'active' => Product::query()->where('is_active', true)->count(),
+                'hidden' => Product::query()->where('is_active', false)->count(),
+                'low' => Product::query()->active()->lowStock()->where('stock', '>', 0)->count(),
+                'out' => Product::query()->active()->where('stock', 0)->count(),
+            ],
             'products' => $products,
             'categories' => Category::query()->orderBy('position')->get(),
+            'brands' => Brand::query()->orderBy('name')->get(),
         ]);
     }
 
@@ -43,10 +59,10 @@ class ProductController extends Controller
     {
         return view('admin.products.form', $this->formData(new Product([
             'is_active' => true,
-            'kind' => 'bottle',
-            'c1' => '#1f7a34',
+            'kind' => Product::KINDS[0],
+            'c1' => Setting::get('theme_color'),
             'c2' => '#ffffff',
-            'low_stock_threshold' => 10,
+            'low_stock_threshold' => (int) Setting::get('default_low_stock_threshold'),
             'stock' => 0,
             'sku' => $this->nextSku(),
         ])));
@@ -121,10 +137,11 @@ class ProductController extends Controller
 
     private function nextSku(): string
     {
-        $last = Product::query()->where('sku', 'like', 'MK-%')->max('sku');
-        $sequence = $last ? (int) substr($last, 3) + 1 : 1;
+        $prefix = mb_strtoupper((string) Setting::get('sku_prefix')).'-';
+        $last = Product::query()->where('sku', 'like', $prefix.'%')->max('sku');
+        $sequence = $last ? (int) substr($last, strlen($prefix)) + 1 : 1;
 
-        return 'MK-'.str_pad((string) $sequence, 5, '0', STR_PAD_LEFT);
+        return $prefix.str_pad((string) $sequence, 5, '0', STR_PAD_LEFT);
     }
 
     private function deleteImage(Product $product): void

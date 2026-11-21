@@ -16,7 +16,7 @@ use Illuminate\View\View;
 class CheckoutController extends Controller
 {
     /**
-     * Turns the browser cart ({slug: quantity}) into an order. Prices are recomputed server-side.
+     * Turns the browser cart ({slug: quantity}) into an order. Prices, promotions and shipping are recomputed server-side.
      */
     public function store(CheckoutRequest $request): JsonResponse
     {
@@ -36,6 +36,8 @@ class CheckoutController extends Controller
                 OrderChannel::Web,
                 PaymentMethod::from($data['payment_method']),
                 $data['notes'] ?? null,
+                couponCode: $data['coupon_code'] ?? null,
+                account: $request->user(),
             );
         } catch (DomainException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);

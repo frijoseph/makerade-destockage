@@ -4,19 +4,20 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title>Connexion — Admin Makerade</title>
-    <link rel="icon" type="image/png" href="{{ asset('img/favicon.png') }}">
+    <title>Connexion — Admin {{ \App\Models\Setting::get('shop_name') }}</title>
+    <link rel="icon" href="{{ \App\Models\Setting::imageUrl(\App\Models\Setting::get('favicon')) }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/admin-ui.css') }}?v={{ filemtime(public_path('css/admin-ui.css')) }}">
     <script>try{var t=localStorage.getItem('mk_admin_theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 </head>
 <body class="admin auth-page">
 <main class="auth-card">
     <div class="auth-brand">
-        <img src="{{ asset('img/logo.png') }}" alt="" width="64" height="56">
-        <div><b>Makerade</b><small>Espace d’administration</small></div>
+        <img src="{{ \App\Models\Setting::imageUrl(\App\Models\Setting::get('logo')) }}" alt="" width="64" height="56">
+        <div><b>{{ \App\Models\Setting::get('shop_name') }}</b><small>Espace d’administration</small></div>
     </div>
     <h1>Bon retour 👋</h1>
     <p class="muted">Connectez-vous pour gérer commandes, produits et stock.</p>

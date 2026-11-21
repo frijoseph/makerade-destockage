@@ -13,7 +13,7 @@
 
 @section('content')
 <section class="card" style="max-width: 760px">
-    <form method="POST" action="{{ $isNew ? route('admin.brands.store') : route('admin.brands.update', $brand) }}" class="form">
+    <form method="POST" enctype="multipart/form-data" action="{{ $isNew ? route('admin.brands.store') : route('admin.brands.update', $brand) }}" class="form">
         @csrf
         @unless ($isNew) @method('PUT') @endunless
         <div class="form-grid">
@@ -27,7 +27,15 @@
                         <option value="{{ $value }}" @selected(old('style', $brand->style) === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
+                <small>Utilisé quand aucun logo n’est envoyé.</small>
             </label>
+            <div class="field span-2"><span>Logo <em>(image, facultatif)</em></span>
+                <div class="image-field">
+                    <span class="image-thumb" id="brandLogo">@if ($url = \App\Models\Setting::imageUrl($brand->logo))<img src="{{ $url }}" alt="">@else<x-admin.icon name="image" :size="22" />@endif</span>
+                    <input type="file" name="logo_file" accept="image/*" data-image-input="#brandLogo" aria-label="Logo de la marque">
+                    @if ($brand->logo)<label class="check"><input type="checkbox" name="remove_logo" value="1"> Retirer</label>@endif
+                </div>
+            </div>
         </div>
         <input type="hidden" name="is_active" value="0">
         <label class="check"><input type="checkbox" name="is_active" value="1" @checked(old('is_active', $brand->is_active))> Visible sur la boutique</label>

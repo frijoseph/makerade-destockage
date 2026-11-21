@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'number', 'customer_id', 'status', 'payment_status', 'payment_method', 'channel',
-    'subtotal', 'shipping_fee', 'discount', 'total',
+    'subtotal', 'shipping_fee', 'discount', 'coupon_id', 'coupon_code', 'total',
     'shipping_name', 'shipping_phone', 'shipping_city', 'shipping_address', 'notes',
     'placed_at', 'paid_at', 'delivered_at',
 ])]
@@ -80,15 +80,28 @@ class Order extends Model
     }
 
     /**
-     * Next sequential order number for the current year, e.g. MK-2026-00042.
+     * Next sequential order number for the current year, e.g. MK-2026-00042 (prefix set in the settings).
      */
     public static function nextNumber(): string
     {
-        $prefix = 'MK-'.now()->format('Y').'-';
+        $prefix = static::numberPrefix();
         $last = static::query()->where('number', 'like', $prefix.'%')->max('number');
         $sequence = $last ? ((int) substr($last, strlen($prefix))) + 1 : 1;
 
         return $prefix.str_pad((string) $sequence, 5, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Example number shown as a hint in the tracking form.
+     */
+    public static function exampleNumber(): string
+    {
+        return static::numberPrefix().'00001';
+    }
+
+    private static function numberPrefix(): string
+    {
+        return mb_strtoupper((string) Setting::get('order_prefix')).'-'.now()->format('Y').'-';
     }
 
     public function itemsCount(): int

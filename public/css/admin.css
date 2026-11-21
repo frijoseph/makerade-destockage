@@ -499,3 +499,21 @@ input[type=color] { width: 44px; height: 44px; padding: 3px; border: 1px solid v
 @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }
 }
+
+/* ---------- settings : repeaters, images ---------- */
+.repeater { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+.repeater-rows { display: flex; flex-direction: column; gap: 12px; }
+.repeater-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--card-2); }
+.repeater-tools { display: flex; flex-direction: column; gap: 6px; }
+.repeater-tools .icon-btn { width: 34px; height: 34px; border-radius: 10px; box-shadow: none; }
+.repeater > .btn { align-self: flex-start; }
+.image-field { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.image-field input[type=file] { flex: 1; min-width: 180px; }
+.image-thumb { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); overflow: hidden; color: var(--muted); flex-shrink: 0; }
+.image-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.sticky-actions { position: sticky; bottom: 0; padding: 12px 0; background: linear-gradient(transparent, var(--bg) 40%); }
+code { padding: 1px 6px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); font-size: 12px; }
+@media (max-width: 640px) {
+    .repeater-row { grid-template-columns: 1fr; }
+    .repeater-tools { flex-direction: row; }
+}

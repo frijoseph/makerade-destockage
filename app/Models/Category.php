@@ -45,7 +45,7 @@ class Category extends Model
     /**
      * Shape expected by the storefront views.
      *
-     * @return array{slug: string, name: string, icon: string, bg: string}
+     * @return array{slug: string, name: string, icon: string, bg: string, image: string|null}
      */
     public function toCatalogArray(): array
     {
@@ -54,6 +54,7 @@ class Category extends Model
             'name' => $this->name,
             'icon' => $this->icon,
             'bg' => $this->bg,
+            'image' => Setting::imageUrl($this->image),
         ];
     }
 }

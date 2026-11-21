@@ -10,8 +10,8 @@
 @section('content')
 <section class="card">
     <div class="table-wrap">
-        <table class="table">
-            <thead><tr><th>Ordre</th><th>Catégorie</th><th class="num">Produits</th><th class="num">Unités en stock</th><th>Visibilité</th><th class="actions"><span class="sr-only">Actions</span></th></tr></thead>
+        <table class="table" data-smart>
+            <thead><tr><th>Ordre</th><th data-sort>Catégorie</th><th class="num" data-sort>Produits</th><th class="num">Unités en stock</th><th data-filter>Visibilité</th><th class="actions"><span class="sr-only">Actions</span></th></tr></thead>
             <tbody>
             @forelse ($categories as $category)
                 <tr data-href="{{ route('admin.categories.edit', $category) }}">

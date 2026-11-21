@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Marques — Makerade Destockage')
+@section('title', 'Marques')
 
 @section('content')
 @php $title = 'Nos marques'; $sub = 'Des marques de confiance, réunies dans une seule boutique.'; @endphp

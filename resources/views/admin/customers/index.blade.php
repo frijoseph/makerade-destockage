@@ -6,20 +6,33 @@
 @section('subheading', 'Créés automatiquement à chaque commande, reconnus par leur numéro de téléphone.')
 
 @section('content')
+<section class="stat-grid">
+    <x-admin.stat tone="violet" icon="users" label="Clients" :value="$stats['total']" />
+    <x-admin.stat tone="green" icon="users-plus" label="Nouveaux (30 j)" :value="$stats['recent']" />
+    <x-admin.stat tone="orange" icon="refresh" label="Clients fidèles" :value="$stats['repeat']" hint="2 commandes ou plus" />
+    <x-admin.stat tone="blue" icon="star" label="Avec un compte" :value="$stats['accounts']" />
+</section>
+
 <section class="card">
-    <form method="GET" class="toolbar" style="margin-bottom: 18px">
+    <form method="GET" class="toolbar" data-filters style="margin-bottom: 18px">
         <label class="search grow">
             <x-admin.icon name="search" :size="18" />
             <span class="sr-only">Rechercher</span>
-            <input type="search" name="q" value="{{ request('q') }}" placeholder="Nom, téléphone ou e-mail">
+            <input type="search" name="q" value="{{ request('q') }}" data-label="Recherche" placeholder="Nom, téléphone ou e-mail" autocomplete="off">
         </label>
-        <select name="city" data-autosubmit aria-label="Ville" style="width: auto">
+        <select name="segment" aria-label="Segment" data-label="Segment">
+            <option value="">Tous les clients</option>
+            @foreach (['new' => 'Nouveaux (30 jours)', 'repeat' => 'Fidèles (2 commandes ou +)', 'inactive' => 'Inactifs (90 jours)', 'account' => 'Avec un compte', 'guest' => 'Sans compte'] as $value => $label)
+                <option value="{{ $value }}" @selected(request('segment') === $value)>{{ $label }}</option>
+            @endforeach
+        </select>
+        <select name="city" aria-label="Ville" data-label="Ville">
             <option value="">Toutes les villes</option>
             @foreach ($cities as $city)
                 <option value="{{ $city }}" @selected(request('city') === $city)>{{ $city }}</option>
             @endforeach
         </select>
-        <select name="sort" data-autosubmit aria-label="Trier" style="width: auto">
+        <select name="sort" aria-label="Trier" data-label="Tri">
             <option value="">Dernière commande</option>
             <option value="spent" @selected(request('sort') === 'spent')>Montant dépensé</option>
         </select>

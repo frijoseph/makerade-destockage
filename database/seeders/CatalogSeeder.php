@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Setting;
 use App\StockMovementType;
 use App\Support\Catalog;
 use App\Support\Inventory;
@@ -37,7 +38,7 @@ class CatalogSeeder extends Seeder
             $model = Product::query()->updateOrCreate(['slug' => $product['slug']], [
                 'category_id' => $categoryIds[$product['category']],
                 'brand_id' => $brand->id,
-                'sku' => 'MK-'.str_pad((string) ($index + 1), 5, '0', STR_PAD_LEFT),
+                'sku' => mb_strtoupper((string) Setting::get('sku_prefix')).'-'.str_pad((string) ($index + 1), 5, '0', STR_PAD_LEFT),
                 'name' => $product['name'],
                 'variant' => $product['variant'],
                 'price' => $product['price'],

@@ -9,27 +9,51 @@
 @endsection
 
 @section('content')
+<section class="stat-grid">
+    <x-admin.stat tone="green" icon="box" label="En ligne" :value="$stats['active']" />
+    <x-admin.stat tone="slate" icon="eye" label="Masqués" :value="$stats['hidden']" :href="route('admin.products.index', ['status' => 'inactive'])" />
+    <x-admin.stat tone="orange" icon="alert" label="Stock faible" :value="$stats['low']" :href="route('admin.products.index', ['stock' => 'low'])" />
+    <x-admin.stat tone="red" icon="x" label="En rupture" :value="$stats['out']" />
+</section>
+
 <section class="card">
-    <form method="GET" class="toolbar" style="margin-bottom: 18px">
+    <form method="GET" class="toolbar" data-filters style="margin-bottom: 18px">
         <label class="search grow">
             <x-admin.icon name="search" :size="18" />
             <span class="sr-only">Rechercher</span>
-            <input type="search" name="q" value="{{ request('q') }}" placeholder="Nom, format ou référence">
+            <input type="search" name="q" value="{{ request('q') }}" data-label="Recherche" placeholder="Nom, format ou référence" autocomplete="off">
         </label>
-        <select name="category" data-autosubmit aria-label="Catégorie" style="width: auto">
+        <select name="category" aria-label="Catégorie" data-label="Catégorie">
             <option value="">Toutes les catégories</option>
             @foreach ($categories as $category)
                 <option value="{{ $category->id }}" @selected((string) request('category') === (string) $category->id)>{{ $category->name }}</option>
             @endforeach
         </select>
-        <select name="stock" data-autosubmit aria-label="Stock" style="width: auto">
+        <select name="brand" aria-label="Marque" data-label="Marque">
+            <option value="">Toutes les marques</option>
+            <option value="none" @selected(request('brand') === 'none')>Sans marque</option>
+            @foreach ($brands as $brand)
+                <option value="{{ $brand->id }}" @selected((string) request('brand') === (string) $brand->id)>{{ $brand->name }}</option>
+            @endforeach
+        </select>
+        <select name="stock" aria-label="Stock" data-label="Stock">
             <option value="">Tout le stock</option>
             <option value="low" @selected(request('stock') === 'low')>Stock faible</option>
         </select>
-        <select name="status" data-autosubmit aria-label="Visibilité" style="width: auto">
+        <select name="status" aria-label="Visibilité" data-label="Visibilité">
             <option value="">Actifs et masqués</option>
             <option value="active" @selected(request('status') === 'active')>Actifs</option>
             <option value="inactive" @selected(request('status') === 'inactive')>Masqués</option>
+        </select>
+        <select name="promo" aria-label="Promotion" data-label="Promotion">
+            <option value="">Avec ou sans promo</option>
+            <option value="1" @selected(request('promo') === '1')>En promotion</option>
+        </select>
+        <select name="sort" aria-label="Tri" data-label="Tri">
+            <option value="">Nom (A-Z)</option>
+            @foreach (['stock' => 'Stock croissant', 'price_asc' => 'Prix croissant', 'price_desc' => 'Prix décroissant', 'recent' => 'Plus récents'] as $value => $label)
+                <option value="{{ $value }}" @selected(request('sort') === $value)>{{ $label }}</option>
+            @endforeach
         </select>
         <button class="btn">Filtrer</button>
     </form>

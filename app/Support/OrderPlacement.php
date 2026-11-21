@@ -2,7 +2,9 @@
 
 namespace App\Support;
 
+use App\Models\Coupon;
 use App\Models\Customer;
+use App\Models\DeliveryZone;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Setting;
@@ -35,6 +37,8 @@ class OrderPlacement
         ?string $notes = null,
         ?User $placedBy = null,
         float $discount = 0,
+        ?string $couponCode = null,
+        ?User $account = null,
     ): Order {
         $lines = array_filter(array_map('intval', $lines), fn (int $quantity): bool => $quantity > 0);
 
@@ -42,7 +46,7 @@ class OrderPlacement
             throw new DomainException('Le panier est vide.');
         }
 
-        return DB::transaction(function () use ($customer, $lines, $channel, $paymentMethod, $notes, $placedBy, $discount): Order {
+        return DB::transaction(function () use ($customer, $lines, $channel, $paymentMethod, $notes, $placedBy, $discount, $couponCode, $account): Order {
             $products = Product::query()->active()->whereIn('id', array_keys($lines))->get()->keyBy('id');
 
             if ($products->count() !== count($lines)) {
@@ -59,13 +63,23 @@ class OrderPlacement
                 ], fn ($value): bool => $value !== null && $value !== ''),
             );
 
+            if ($account && ! $buyer->user_id) {
+                $buyer->update(['user_id' => $account->id]);
+            }
+
             $subtotal = 0.0;
             foreach ($lines as $productId => $quantity) {
                 $subtotal += (float) $products[$productId]->price * $quantity;
             }
 
-            $shippingFee = static::shippingFeeFor($subtotal);
-            $discount = min(max($discount, 0), $subtotal);
+            $city = $customer['city'] ?? $buyer->city;
+            $promotion = $channel === OrderChannel::Web
+                ? Promotions::resolve($subtotal, $couponCode, $buyer->phone)
+                : ['coupon' => null, 'discount' => 0.0, 'free_shipping' => false];
+            $coupon = $promotion['coupon'] ? static::consumeCoupon($promotion['coupon'], $subtotal, $buyer->phone) : null;
+
+            $shippingFee = $promotion['free_shipping'] ? 0.0 : static::shippingFeeFor($subtotal, $city);
+            $discount = min(max($discount, 0) + ($coupon ? $promotion['discount'] : 0.0), $subtotal);
 
             $order = Order::query()->create([
                 'number' => Order::nextNumber(),
@@ -77,10 +91,12 @@ class OrderPlacement
                 'subtotal' => $subtotal,
                 'shipping_fee' => $shippingFee,
                 'discount' => $discount,
+                'coupon_id' => $coupon?->id,
+                'coupon_code' => $coupon?->code,
                 'total' => $subtotal + $shippingFee - $discount,
                 'shipping_name' => $buyer->name,
                 'shipping_phone' => $buyer->phone,
-                'shipping_city' => $customer['city'] ?? $buyer->city,
+                'shipping_city' => $city,
                 'shipping_address' => $customer['address'] ?? $buyer->address,
                 'notes' => $notes,
                 'placed_at' => now(),
@@ -105,15 +121,34 @@ class OrderPlacement
         });
     }
 
-    public static function shippingFeeFor(float $subtotal): float
+    /**
+     * Shipping fee for a subtotal: the city's delivery zone if there is one, the shop defaults otherwise.
+     */
+    public static function shippingFeeFor(float $subtotal, ?string $city = null): float
     {
         if ($subtotal <= 0) {
             return 0.0;
         }
 
-        $threshold = (float) Setting::get('free_shipping_threshold', 0);
+        $zone = DeliveryZone::forCity($city);
+        $threshold = (float) ($zone?->free_threshold ?? Setting::get('free_shipping_threshold', 0));
+        $fee = (float) ($zone?->fee ?? Setting::get('shipping_fee', 0));
 
-        return $threshold > 0 && $subtotal >= $threshold ? 0.0 : (float) Setting::get('shipping_fee', 0);
+        return $threshold > 0 && $subtotal >= $threshold ? 0.0 : $fee;
+    }
+
+    /**
+     * Counts a use of the coupon under a row lock so the usage limit can never be exceeded by parallel orders.
+     *
+     * @throws DomainException when the coupon was used up in the meantime
+     */
+    private static function consumeCoupon(Coupon $coupon, float $subtotal, string $phone): Coupon
+    {
+        $locked = Coupon::query()->lockForUpdate()->findOrFail($coupon->id);
+        Promotions::assertUsable($locked, $subtotal, $phone);
+        $locked->increment('used_count');
+
+        return $locked;
     }
 
     /**

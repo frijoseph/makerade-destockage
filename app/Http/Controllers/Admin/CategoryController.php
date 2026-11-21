@@ -34,7 +34,8 @@ class CategoryController extends Controller
 
     public function store(CategoryRequest $request): RedirectResponse
     {
-        $category = Category::query()->create($request->validated());
+        $category = Category::query()->create($request->safe()->except(['image_file', 'remove_image'])
+            + ['image' => $this->syncImage($request, 'image', 'categories', null)]);
 
         return redirect()->route('admin.categories.index')->with('status', "Catégorie « {$category->name} » créée.");
     }
@@ -46,7 +47,8 @@ class CategoryController extends Controller
 
     public function update(CategoryRequest $request, Category $category): RedirectResponse
     {
-        $category->update($request->validated());
+        $category->update($request->safe()->except(['image_file', 'remove_image'])
+            + ['image' => $this->syncImage($request, 'image', 'categories', $category->image)]);
 
         return redirect()->route('admin.categories.index')->with('status', "Catégorie « {$category->name} » mise à jour.");
     }

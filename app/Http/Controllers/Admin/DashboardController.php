@@ -23,6 +23,9 @@ class DashboardController extends Controller
             'byCategory' => $report->revenueByCategory(),
             'sellThrough' => $report->sellThroughByCategory(),
             'stockHealth' => $report->stockHealth(),
+            'topProducts' => $report->topProducts(),
+            'statusCounts' => $report->ordersByStatus(),
+            'newCustomers' => $report->newCustomers(),
             'recentOrders' => Order::query()->with('customer')->latest('placed_at')->limit(6)->get(),
             'lowStockProducts' => Product::query()->active()->lowStock()->orderBy('stock')->limit(5)->get(),
         ]);

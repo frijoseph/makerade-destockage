@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\User;
 use App\OrderChannel;
 use App\OrderStatus;
@@ -22,7 +23,7 @@ class OrderPlacementTest extends TestCase
 
     public function test_placing_an_order_computes_totals_and_takes_stock(): void
     {
-        config(['shop.shipping_fee' => 5, 'shop.free_shipping_threshold' => 100]);
+        Setting::putMany(['shipping_fee' => 5, 'free_shipping_threshold' => 100]);
         $soap = Product::factory()->create(['price' => 2.50, 'stock' => 10]);
         $powder = Product::factory()->create(['price' => 8, 'stock' => 4]);
 
@@ -45,7 +46,7 @@ class OrderPlacementTest extends TestCase
 
     public function test_free_shipping_applies_above_the_threshold(): void
     {
-        config(['shop.shipping_fee' => 5, 'shop.free_shipping_threshold' => 20]);
+        Setting::putMany(['shipping_fee' => 5, 'free_shipping_threshold' => 20]);
         $product = Product::factory()->create(['price' => 10]);
 
         $order = OrderPlacement::place(['name' => 'Awa', 'phone' => '0700000000'], [$product->id => 2]);

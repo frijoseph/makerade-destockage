@@ -163,6 +163,8 @@ class Product extends Model
             'is_new' => $this->is_new,
             'hot' => $this->is_hot,
             'stock' => $this->stock,
+            'sold' => (int) ($this->sold ?? 0),
+            'description' => $this->description,
         ];
 
         if ($url = $this->image_url) {

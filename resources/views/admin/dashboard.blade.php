@@ -41,6 +41,14 @@
                  :caption="$stockHealth['low'].' en alerte · '.$stockHealth['out'].' en rupture sur '.$stockHealth['active']" />
 </section>
 
+<section class="quick">
+    <a href="{{ route('admin.orders.create') }}"><x-admin.icon name="plus" :size="18" :stroke="2.4" /> Saisir une commande</a>
+    <a href="{{ route('admin.products.create') }}"><x-admin.icon name="box" :size="18" /> Nouveau produit</a>
+    <a href="{{ route('admin.coupons.index') }}"><x-admin.icon name="percent" :size="18" /> Codes promo</a>
+    <a href="{{ route('admin.popups.index') }}"><x-admin.icon name="gift" :size="18" /> Popups & roue</a>
+    <a href="{{ route('admin.stock.index') }}"><x-admin.icon name="stock" :size="18" /> Stock</a>
+</section>
+
 <section class="grid-2">
     <article class="card">
         <header class="card-head">
@@ -107,6 +115,36 @@
     </div>
 </section>
 
+<section class="grid-2">
+    <article class="card">
+        <header class="card-head"><h2>Meilleurs produits</h2><span class="chip">{{ $report->label() }}</span></header>
+        @forelse ($topProducts as $i => $product)
+            <div class="rank">
+                <span class="rank-n">{{ $i + 1 }}</span>
+                <span class="rank-img">@if ($product['image'])<img src="{{ $product['image'] }}" alt="" loading="lazy">@else<x-admin.icon name="box" :size="18" />@endif</span>
+                <span class="rank-tx"><b>{{ $product['name'] }}</b><small>{{ $product['variant'] }}</small></span>
+                <span class="rank-v"><b>{{ $product['units'] }} vendus</b><small>{{ Money::format($product['revenue']) }}</small></span>
+            </div>
+        @empty
+            <p class="empty">Aucune vente sur la période.</p>
+        @endforelse
+    </article>
+
+    <article class="card">
+        <header class="card-head"><h2>Commandes par statut</h2><span class="chip">{{ $newCustomers }} nouveau(x) client(s)</span></header>
+        @php $statusTotal = max(1, $statusCounts->sum()); @endphp
+        <div class="hbars">
+            @foreach (\App\OrderStatus::cases() as $status)
+                <a href="{{ route('admin.orders.index', ['status' => $status->value]) }}" class="hbar tone-{{ $status->tone() }}">
+                    <span>{{ $status->label() }}</span>
+                    <div class="bar"><i style="width: {{ round($statusCounts[$status->value] / $statusTotal * 100) }}%"></i></div>
+                    <b>{{ $statusCounts[$status->value] }}</b>
+                </a>
+            @endforeach
+        </div>
+    </article>
+</section>
+
 <section class="card">
     <header class="card-head">
         <h2>Commandes récentes</h2>
@@ -121,7 +159,7 @@
                     <td class="nowrap"><span class="cell-ic"><x-admin.icon name="calendar" :size="16" /></span>{{ $order->placed_at->translatedFormat('j M Y') }}</td>
                     <td><a href="{{ route('admin.orders.show', $order) }}" class="strong">{{ $order->number }}</a><small>{{ $order->customer->name }}</small></td>
                     <td><x-admin.badge :tone="$order->status->tone()">{{ $order->status->label() }}</x-admin.badge></td>
-                    <td><span class="pay"><i class="dot tone-{{ $order->payment_method->tone() }}"></i>{{ $order->payment_method->label() }}</span></td>
+                    <td><span class="pay"><x-payment-icon :method="$order->payment_method" :size="22" />{{ $order->payment_method->label() }}</span></td>
                     <td class="num strong">{{ Money::format($order->total) }}</td>
                 </tr>
             @empty

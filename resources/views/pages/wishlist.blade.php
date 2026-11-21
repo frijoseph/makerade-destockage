@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Favoris — Makerade Destockage')
+@section('title', 'Favoris')
 
 @section('content')
 @php $title = 'Mes favoris'; @endphp

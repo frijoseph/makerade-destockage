@@ -1,0 +1,58 @@
+/* Thème SweetAlert2 : suit les variables de la boutique ou de l'administration (clair / sombre) */
+.mk-swal { --bg: var(--card, #fff); --fg: var(--text, var(--ink, #14211a)); --mut: var(--muted, var(--mut, #667a6e)); --ac: var(--accent, var(--g, #237a32)); --ln: var(--line, #e6ebe7);
+  background: var(--bg) !important; color: var(--fg) !important; border-radius: 20px !important; font-family: inherit !important; box-shadow: 0 24px 60px rgba(10, 20, 14, .28) !important; border: 1px solid var(--ln); padding: 1.4em 1.4em 1.2em !important; }
+.mk-swal .swal2-html-container { color: var(--fg); margin: .6em 0 0; }
+.mk-swal-title, .mk-swal .swal2-title { color: var(--fg) !important; font-size: 1.35rem !important; font-weight: 800 !important; letter-spacing: -.01em; padding: 0 .4em; }
+.mk-swal .swal2-icon { margin-top: .4em; }
+.mk-swal-close { color: var(--mut) !important; }
+.mk-swal-actions { gap: 10px; margin-top: 1.2em !important; }
+.mk-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 22px; border: 0; border-radius: 12px; font: 700 15px/1 inherit; cursor: pointer; transition: transform .15s, box-shadow .2s, filter .2s; }
+.mk-btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+.mk-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--ac, #237a32) 40%, transparent); outline-offset: 2px; }
+.mk-btn-primary { background: var(--ac, #237a32); color: #fff; box-shadow: 0 8px 18px color-mix(in srgb, var(--ac, #237a32) 38%, transparent); }
+.mk-btn-ghost { background: transparent; color: var(--fg); border: 1.5px solid var(--ln); }
+.mk-btn-danger { background: #e0364b; color: #fff; box-shadow: 0 8px 18px rgba(224, 54, 75, .32); }
+.mk-swal .swal2-timer-progress-bar { background: var(--ac); }
+.mk-swal .swal2-validation-message { background: color-mix(in srgb, #e0364b 10%, var(--bg)); color: #c62c40; border-radius: 10px; font-weight: 600; margin: 14px 0 0; }
+
+/* toast */
+.mk-toast.swal2-popup { padding: .9em 1em !important; border-radius: 16px !important; align-items: center; min-width: 260px; max-width: min(92vw, 420px); }
+.mk-toast .swal2-html-container { font-size: .95rem; font-weight: 600; margin: 0 .6em; text-align: left; }
+.mk-toast .swal2-icon { margin: 0 .4em 0 0; width: 2em; height: 2em; min-width: 2em; }
+.mk-toast .swal2-icon .swal2-icon-content { font-size: 1.4em; }
+.mk-toast .swal2-close { position: static; font-size: 1.4em; }
+.mk-toast a { color: var(--ac); font-weight: 700; margin-left: 8px; text-decoration: underline; }
+
+/* erreurs */
+.mk-errors { text-align: left; margin: 0; padding-left: 1.2em; color: var(--fg); display: grid; gap: 6px; font-size: .95rem; }
+
+/* formulaire en modale */
+.mk-swal-form .swal2-html-container { text-align: left; max-height: 68vh; overflow-y: auto; padding: 4px 2px; }
+.mk-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 14px; }
+.mk-field { display: grid; gap: 6px; font-size: 13px; font-weight: 700; min-width: 0; }
+.mk-field b { color: #e0364b; }
+.mk-field small { color: var(--mut); font-weight: 500; font-size: 12px; }
+.mk-field input, .mk-field select, .mk-field textarea { width: 100%; min-height: 44px; padding: 10px 14px; border: 1.5px solid var(--ln); border-radius: 12px; background: var(--bg); color: var(--fg); font: 500 15px/1.3 inherit; outline: 0; transition: border-color .2s, box-shadow .2s; }
+.mk-field textarea { resize: vertical; }
+.mk-field input:focus, .mk-field select:focus, .mk-field textarea:focus { border-color: var(--ac); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ac) 18%, transparent); }
+.mk-field .is-invalid, .mk-form .is-invalid { border-color: #e0364b !important; }
+.mk-span { grid-column: 1 / -1; }
+.mk-check { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; font-weight: 600; cursor: pointer; line-height: 1.35; }
+.mk-check small { color: var(--mut); font-weight: 500; }
+.mk-check input { position: absolute; opacity: 0; width: 0; height: 0; }
+.mk-switch { flex-shrink: 0; width: 42px; height: 24px; border-radius: 99px; background: var(--ln); position: relative; transition: background .2s; margin-top: 1px; }
+.mk-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); transition: transform .2s; }
+.mk-check input:checked + .mk-switch { background: var(--ac); }
+.mk-check input:checked + .mk-switch::after { transform: translateX(18px); }
+.mk-check input:focus-visible + .mk-switch { outline: 3px solid color-mix(in srgb, var(--ac) 40%, transparent); outline-offset: 2px; }
+@media (max-width: 560px) { .mk-form { grid-template-columns: 1fr; } .mk-swal { padding: 1.1em .9em !important; } .mk-swal-actions { width: 100%; } .mk-swal-actions .mk-btn { flex: 1; } }
+
+/* confettis */
+.mk-confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 100000; }
+
+/* code promo copiable */
+.mk-code { display: inline-flex; align-items: center; justify-content: center; margin: 8px 0; padding: 12px 26px; border: 2px dashed var(--ac); border-radius: 14px; background: color-mix(in srgb, var(--ac) 9%, var(--bg)); cursor: pointer; position: relative; }
+.mk-code b { font: 800 1.6rem/1 inherit; letter-spacing: .14em; color: var(--ac); }
+.mk-code::after { content: "Copier"; position: absolute; right: 10px; top: -10px; padding: 2px 9px; border-radius: 99px; background: var(--ac); color: #fff; font: 700 11px/18px inherit; }
+.mk-code.copied::after { content: "Copié ✓"; }
+.mk-code-note { color: var(--mut); font-size: .95rem; }

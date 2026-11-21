@@ -5,23 +5,32 @@ namespace App\Support;
 use App\Models\Setting;
 
 /**
- * Formats amounts with the currency configured in the shop settings.
+ * Formats amounts with the currency configured in the shop settings (admin and storefront alike).
  */
 class Money
 {
     public static function format(float|int|string|null $amount): string
     {
-        $decimals = (int) Setting::get('currency_decimals', 2);
-        $symbol = (string) Setting::get('currency_symbol', '$');
-        $number = number_format((float) $amount, $decimals, ',', "\u{202F}");
+        $config = static::config();
+        $number = number_format((float) $amount, $config['decimals'], $config['decimal'], $config['thousands']);
 
-        return Setting::get('currency_position', 'before') === 'after'
-            ? $number."\u{00A0}".$symbol
-            : $symbol.$number;
+        return $config['position'] === 'after'
+            ? $number."\u{00A0}".$config['symbol']
+            : $config['symbol'].$number;
     }
 
     /**
-     * Short form for chart axes and KPI cards, e.g. $1,2k.
+     * Plain number with the shop's separators (review counts, quantities…).
+     */
+    public static function number(float|int $value, int $decimals = 0): string
+    {
+        $config = static::config();
+
+        return number_format($value, $decimals, $config['decimal'], $config['thousands']);
+    }
+
+    /**
+     * Short form for chart axes and KPI cards, e.g. $1.2k.
      */
     public static function compact(float|int|string|null $amount): string
     {
@@ -31,13 +40,34 @@ class Money
             return static::format(round($value));
         }
 
-        $symbol = (string) Setting::get('currency_symbol', '$');
+        $config = static::config();
         $short = abs($value) >= 1_000_000
-            ? number_format($value / 1_000_000, 1, ',', '').'M'
-            : number_format($value / 1000, 1, ',', '').'k';
+            ? number_format($value / 1_000_000, 1, $config['decimal'], '').'M'
+            : number_format($value / 1000, 1, $config['decimal'], '').'k';
 
-        return Setting::get('currency_position', 'before') === 'after'
-            ? $short."\u{00A0}".$symbol
-            : $symbol.$short;
+        return $config['position'] === 'after' ? $short."\u{00A0}".$config['symbol'] : $config['symbol'].$short;
     }
+
+    /**
+     * Currency settings, also handed to the storefront scripts so they format prices the same way.
+     *
+     * @return array{symbol: string, position: string, decimals: int, decimal: string, thousands: string}
+     */
+    public static function config(): array
+    {
+        return [
+            'symbol' => (string) Setting::get('currency_symbol'),
+            'position' => (string) Setting::get('currency_position'),
+            'decimals' => (int) Setting::get('currency_decimals'),
+            'decimal' => self::SEPARATORS[Setting::get('decimal_separator')] ?? '.',
+            'thousands' => self::SEPARATORS[Setting::get('thousands_separator')] ?? ',',
+        ];
+    }
+
+    /**
+     * Separator names stored in the settings (whitespace would be trimmed away by the request).
+     *
+     * @var array<string, string>
+     */
+    private const SEPARATORS = ['dot' => '.', 'comma' => ',', 'space' => "\u{202F}", 'none' => ''];
 }

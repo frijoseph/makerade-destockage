@@ -37,6 +37,8 @@ class BrandRequest extends FormRequest
             'color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'style' => ['required', Rule::in(Brand::STYLES)],
             'is_active' => ['boolean'],
+            'logo_file' => ['nullable', 'image', 'max:4096'],
+            'remove_logo' => ['nullable', 'boolean'],
         ];
     }
 

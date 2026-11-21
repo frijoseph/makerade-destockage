@@ -4,18 +4,25 @@
   const $ = (s, c = document) => c.querySelector(s);
   const $$ = (s, c = document) => [...c.querySelectorAll(s)];
   const rnd = (a, b) => a + Math.random() * (b - a);
-  const money = n => '$' + Number(n).toFixed(2);
+  const SHOP = window.MK_SHOP || {};
+  const money = window.mkMoney || (n => Number(n).toFixed(2));
   document.documentElement.classList.add('js');
   let CAT = {}; try { CAT = JSON.parse($('#catalog').textContent); } catch (e) {}
   const page = document.body.dataset.page;
   const B = window.MK_BASE || '';
 
-  /* ---------- compte à rebours des ventes flash (jusqu'à minuit) ---------- */
+  /* ---------- compte à rebours des ventes flash (date de fin réglée dans l'admin) ---------- */
   $$('[data-countdown]').forEach(box => {
+    const end = Date.parse(box.dataset.countdown);
+    if (!end) return;
     const h = $('[data-h]', box), m = $('[data-m]', box), s = $('[data-s]', box);
     const set = (el, v) => { const t = String(v).padStart(2, '0'); if (el.textContent !== t) { el.textContent = t; el.classList.remove('flip'); void el.offsetWidth; el.classList.add('flip'); } };
-    const tick = () => { const end = new Date(); end.setHours(23, 59, 59, 999); const d = Math.max(0, Math.floor((end - Date.now()) / 1000)); set(h, Math.floor(d / 3600)); set(m, Math.floor(d % 3600 / 60)); set(s, d % 60); };
-    tick(); setInterval(tick, 1000);
+    const tick = () => {
+      const d = Math.max(0, Math.floor((end - Date.now()) / 1000));
+      set(h, Math.floor(d / 3600)); set(m, Math.floor(d % 3600 / 60)); set(s, d % 60);
+      if (!d) { clearInterval(timer); (box.closest('.fl-time') || box).remove(); }
+    };
+    const timer = setInterval(tick, 1000); tick();
   });
 
   /* ---------- images : fondu après chargement ---------- */
@@ -44,7 +51,7 @@
   el.innerHTML = `<div class="mini-h"><h3>Mon panier <span id="miniCount"></span></h3><button class="icon-btn" data-mclose aria-label="Fermer">✕</button></div>
     <div class="mini-body" id="miniBody"></div>
     <div class="mini-f"><div class="ship-bar"><i id="miniBar"></i></div><p class="ship-note" id="miniNote"></p>
-    <div class="srow total"><span>Sous-total</span><b id="miniTotal">$0.00</b></div>
+    <div class="srow total"><span>Sous-total</span><b id="miniTotal">${money(0)}</b></div>
     <a href="${B}/cart/" class="btn btn-ghost block">Voir le panier</a><a href="${B}/cart/" class="btn btn-primary block">Commander</a></div>`;
   const scrim = document.createElement('div'); scrim.className = 'mini-scrim';
   document.body.append(scrim, el);
@@ -58,11 +65,11 @@
     $('#miniBody').innerHTML = ids.length ? ids.map(id => {
       const p = CAT[id], q = st.cart[id];
       return `<div class="mi" data-id="${id}">${p.image ? `<img src="${p.image}" alt="">` : '<div class="ph"></div>'}
-        <div><b>${p.name}</b><small>${p.variant}</small><span class="mp">${money(p.price * q)}</span></div>
+        <div><b>${MKUI.esc(p.name)}</b><small>${MKUI.esc(p.variant)}</small><span class="mp">${money(p.price * q)}</span></div>
         <div class="mi-r"><div class="mi-q"><button data-ms="-1" aria-label="Moins">−</button><span>${q}</span><button data-ms="1" aria-label="Plus">+</button></div><button class="mi-x" data-mrm>Retirer</button></div></div>`;
     }).join('') : '<div class="mini-empty"><span class="big">🧴</span>Votre panier est vide.<br>Ajoutez des produits pour commencer.</div>';
     const sub = st.sub(); $('#miniTotal').textContent = money(sub);
-    const FREE = window.MK_SHIPPING?.freeFrom ?? 49;
+    const FREE = SHOP.shipping?.freeFrom ?? 0;
     $('#miniBar').style.width = (FREE ? Math.min(100, sub / FREE * 100) : 0) + '%';
     $('#miniNote').textContent = !sub || !FREE ? '' : sub >= FREE ? '🎉 Livraison gratuite débloquée !' : `Ajoutez ${money(FREE - sub)} pour la livraison gratuite.`;
   };
@@ -74,7 +81,7 @@
     if (rm) { delete st.cart[id]; st.sync(); }
   });
   addEventListener('mk:cart', () => { syncCards(); renderMini(); });
-  window.mkAdded = id => { if (page === 'cart') MK().toast(`<b>${CAT[id] ? CAT[id].name : 'Article'}</b> ajouté au panier.`); else setTimeout(open, 350); };
+  window.mkAdded = id => { if (page === 'cart') MK().toast(`${CAT[id] ? CAT[id].name : 'Article'} ajouté au panier.`); else setTimeout(open, 350); };
   // un clic sur l'icône du panier ouvre le panier latéral
   document.addEventListener('click', e => {
     const c = e.target.closest('.act-cart'); if (!c || page === 'cart') return;
@@ -82,28 +89,35 @@
   }, true);
   setTimeout(() => { syncCards(); renderMini(); }, 60);
 
-  /* ---------- notifications « vient d'acheter » ---------- */
-  if (['home', 'shop', 'deals', 'arrivals', 'product'].includes(page)) {
-    const names = ['Awa', 'Koffi', 'Fatou', 'Yao', 'Mariam', 'Kouadio', 'Aminata', 'Serge', 'Adjoua', 'Ibrahim', 'Nadège', 'Moussa', 'Aya', 'Désiré'];
-    const cities = ['Abidjan', 'Bouaké', 'Yamoussoukro', 'San-Pédro', 'Daloa', 'Korhogo', 'Man', 'Abengourou', 'Grand-Bassam'];
+  /* ---------- achats récents RÉELS (ville + produit, jamais le nom du client) ---------- */
+  const sales = (SHOP.recentSales || []).filter(s => CAT[s.slug]);
+  if (sales.length && ['home', 'shop', 'deals', 'arrivals', 'product'].includes(page)) {
+    const ago = min => min < 60 ? `il y a ${Math.max(1, min)} min` : min < 1440 ? `il y a ${Math.round(min / 60)} h` : `il y a ${Math.round(min / 1440)} j`;
+    let next = 0;
     const show = () => {
-      const ps = Object.values(CAT); if (!ps.length || document.hidden) return schedule();
-      const p = ps[(Math.random() * ps.length) | 0], n = $('.sale'); if (n) n.remove();
+      if (document.hidden) return schedule();
+      const sale = sales[next++ % sales.length], p = CAT[sale.slug], old = $('.sale'); if (old) old.remove();
       const box = document.createElement('div'); box.className = 'sale';
-      box.innerHTML = `${p.image ? `<img src="${p.image}" alt="">` : ''}<div><b>${names[(Math.random() * names.length) | 0]}</b> de ${cities[(Math.random() * cities.length) | 0]} vient d'acheter<br><a href="${B}/product/${p.slug}/">${p.name}</a><small><span class="ok">✔ Achat vérifié</span> · il y a ${1 + ((Math.random() * 9) | 0)} min</small></div><button aria-label="Fermer">✕</button>`;
+      if (p.image) { const img = document.createElement('img'); img.src = p.image; img.alt = ''; box.appendChild(img); }
+      const txt = document.createElement('div'), link = document.createElement('a'), meta = document.createElement('small');
+      link.href = `${B}/product/${p.slug}/`; link.textContent = p.name;
+      meta.textContent = ago(sale.minutes);
+      txt.append(`Commandé à ${sale.city}`, document.createElement('br'), link, meta);
+      const close = document.createElement('button'); close.setAttribute('aria-label', 'Fermer'); close.textContent = '✕';
+      box.append(txt, close);
       document.body.appendChild(box);
       requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add('show')));
       const hide = () => { box.classList.remove('show'); setTimeout(() => box.remove(), 700); };
-      $('button', box).addEventListener('click', hide); setTimeout(hide, 5500); schedule();
+      close.addEventListener('click', hide); setTimeout(hide, 5500); schedule();
     };
     const schedule = () => setTimeout(show, rnd(14000, 24000));
     setTimeout(show, 9000);
   }
 
-  /* ---------- placeholder de recherche « machine à écrire » ---------- */
+  /* ---------- placeholder de recherche « machine à écrire » (produits réels du catalogue) ---------- */
   const inp = $('#searchInput');
-  if (inp) {
-    const words = ['une lessive Surf Excel…', 'un savon Dove…', 'du liquide vaisselle…', 'un shampooing…', 'un désinfectant Dettol…', 'un nettoyant WC…'];
+  const words = Object.values(CAT).sort(() => Math.random() - .5).slice(0, 6).map(p => `${p.name}…`);
+  if (inp && words.length) {
     let w = 0, i = 0, dir = 1;
     const tick = () => {
       if (document.activeElement === inp || inp.value) return setTimeout(tick, 700);

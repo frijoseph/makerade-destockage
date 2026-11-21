@@ -16,14 +16,14 @@
     <section class="card">
         <header class="card-head">
             <h2>Mouvements</h2>
-            <form method="GET" class="toolbar">
-                <select name="product" data-autosubmit aria-label="Produit" style="width: auto; max-width: 220px">
+            <form method="GET" class="toolbar" data-filters>
+                <select name="product" aria-label="Produit" data-label="Produit" style="max-width: 240px">
                     <option value="">Tous les produits</option>
                     @foreach ($products as $product)
                         <option value="{{ $product->id }}" @selected($selectedProduct === $product->id)>{{ $product->name }}</option>
                     @endforeach
                 </select>
-                <select name="type" data-autosubmit aria-label="Type" style="width: auto">
+                <select name="type" aria-label="Type" data-label="Type">
                     <option value="">Tous les types</option>
                     @foreach (StockMovementType::cases() as $type)
                         <option value="{{ $type->value }}" @selected(request('type') === $type->value)>{{ $type->label() }}</option>

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['slug', 'name', 'color', 'style', 'is_active'])]
+#[Fillable(['slug', 'name', 'color', 'style', 'logo', 'is_active'])]
 class Brand extends Model
 {
     /** @use HasFactory<BrandFactory> */
@@ -51,7 +51,7 @@ class Brand extends Model
     /**
      * Shape expected by the storefront views.
      *
-     * @return array{name: string, color: string, style: string}
+     * @return array{name: string, color: string, style: string, logo: string|null}
      */
     public function toCatalogArray(): array
     {
@@ -59,6 +59,7 @@ class Brand extends Model
             'name' => $this->name,
             'color' => $this->color,
             'style' => $this->style,
+            'logo' => Setting::imageUrl($this->logo),
         ];
     }
 }

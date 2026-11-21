@@ -21,6 +21,7 @@ class ProductRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'reviews' => (int) $this->input('reviews', 0),
             'slug' => Str::slug($this->input('slug') ?: $this->input('name').' '.$this->input('variant')),
             'is_new' => $this->boolean('is_new'),
             'is_hot' => $this->boolean('is_hot'),
@@ -53,6 +54,8 @@ class ProductRequest extends FormRequest
             'c1' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'c2' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'label' => ['nullable', 'string', 'max:255'],
+            'rating' => ['nullable', 'numeric', 'min:0', 'max:5'],
+            'reviews' => ['nullable', 'integer', 'min:0'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
             'remove_image' => ['nullable', 'boolean'],
             'is_new' => ['boolean'],

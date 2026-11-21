@@ -1,6 +1,7 @@
 @extends('admin.layouts.app')
 @php use App\Support\Money; use App\OrderStatus; use App\PaymentStatus; use App\PaymentMethod; @endphp
 
+@php $paymentIcon = fn ($method) => \Illuminate\Support\Facades\Blade::render('<x-payment-icon :method="$m" :size="24" />', ['m' => $method]); @endphp
 @section('title', 'Commande '.$order->number)
 @section('heading', 'Commande '.$order->number)
 @section('subheading')Passée le {{ $order->placed_at->translatedFormat('l j F Y à H:i') }} · {{ $order->channel->label() }}@endsection
@@ -42,7 +43,7 @@
             <div class="totals" style="margin-top: 22px">
                 <div><span>Sous-total</span><b>{{ Money::format($order->subtotal) }}</b></div>
                 <div><span>Livraison</span><b>{{ (float) $order->shipping_fee ? Money::format($order->shipping_fee) : 'Offerte' }}</b></div>
-                @if ((float) $order->discount)<div><span>Remise</span><b>− {{ Money::format($order->discount) }}</b></div>@endif
+                @if ((float) $order->discount)<div><span>Remise @if ($order->coupon_code)(code <b class="code-chip" style="padding:2px 8px">{{ $order->coupon_code }}</b>)@endif</span><b>− {{ Money::format($order->discount) }}</b></div>@endif
                 <div class="grand"><span>Total</span><b>{{ Money::format($order->total) }}</b></div>
             </div>
         </section>
@@ -95,7 +96,7 @@
                     <span>Moyen de paiement</span>
                     <select name="payment_method">
                         @foreach (PaymentMethod::cases() as $method)
-                            <option value="{{ $method->value }}" @selected($order->payment_method === $method)>{{ $method->label() }}</option>
+                            <option value="{{ $method->value }}" data-icon="{{ $paymentIcon($method) }}" @selected($order->payment_method === $method)>{{ $method->label() }}</option>
                         @endforeach
                     </select>
                 </label>
@@ -124,7 +125,7 @@
             <p class="contact-line"><x-admin.icon name="phone" :size="16" /> <a href="tel:{{ $order->shipping_phone }}">{{ $order->shipping_phone }}</a></p>
             @php $whatsapp = preg_replace('/\D/', '', (string) $order->shipping_phone); @endphp
             @if ($whatsapp)
-                <p class="contact-line"><x-admin.icon name="whatsapp" :size="16" /> <a href="https://wa.me/{{ $whatsapp }}?text={{ rawurlencode('Bonjour, au sujet de votre commande '.$order->number.' chez Makerade Destockage…') }}" target="_blank" rel="noopener">Écrire sur WhatsApp</a></p>
+                <p class="contact-line"><x-admin.icon name="whatsapp" :size="16" /> <a href="https://wa.me/{{ $whatsapp }}?text={{ rawurlencode('Bonjour, au sujet de votre commande '.$order->number.' chez '.$shop->shop_name.'…') }}" target="_blank" rel="noopener">Écrire sur WhatsApp</a></p>
             @endif
             @if ($order->customer->email)
                 <p class="contact-line"><x-admin.icon name="mail" :size="16" /> <a href="mailto:{{ $order->customer->email }}">{{ $order->customer->email }}</a></p>

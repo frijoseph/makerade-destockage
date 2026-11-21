@@ -37,6 +37,8 @@ class CategoryRequest extends FormRequest
             'bg' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'position' => ['required', 'integer', 'min:0', 'max:1000'],
             'is_active' => ['boolean'],
+            'image_file' => ['nullable', 'image', 'max:4096'],
+            'remove_image' => ['nullable', 'boolean'],
         ];
     }
 

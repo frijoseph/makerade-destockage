@@ -24,7 +24,8 @@ class BrandController extends Controller
 
     public function store(BrandRequest $request): RedirectResponse
     {
-        $brand = Brand::query()->create($request->validated());
+        $brand = Brand::query()->create($request->safe()->except(['logo_file', 'remove_logo'])
+            + ['logo' => $this->syncImage($request, 'logo', 'brands', null)]);
 
         return redirect()->route('admin.brands.index')->with('status', "Marque « {$brand->name} » créée.");
     }
@@ -36,7 +37,8 @@ class BrandController extends Controller
 
     public function update(BrandRequest $request, Brand $brand): RedirectResponse
     {
-        $brand->update($request->validated());
+        $brand->update($request->safe()->except(['logo_file', 'remove_logo'])
+            + ['logo' => $this->syncImage($request, 'logo', 'brands', $brand->logo)]);
 
         return redirect()->route('admin.brands.index')->with('status', "Marque « {$brand->name} » mise à jour.");
     }

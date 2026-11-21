@@ -4,7 +4,13 @@ namespace App\Support;
 
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Customer;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Setting;
+use App\OrderStatus;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
@@ -19,7 +25,8 @@ class Catalog
     {
         return once(fn (): array => self::fromDb('categories', fn (): array => Category::query()->active()
             ->orderBy('position')->orderBy('id')->get()
-            ->map(fn (Category $category): array => $category->toCatalogArray())->all()) ?? self::seedCategories());
+            ->map(fn (Category $category): array => $category->toCatalogArray())->all())
+            ?? array_map(fn (array $category): array => ['image' => Setting::imageUrl($category['image'])] + $category, self::seedCategories()));
     }
 
     public static function brands(): array
@@ -32,7 +39,9 @@ class Catalog
     public static function products(): array
     {
         return once(fn (): array => self::fromDb('products', fn (): array => Product::query()->active()
-            ->with(['brand', 'category'])->orderBy('id')->get()
+            ->with(['brand', 'category'])
+            ->withSum(['orderItems as sold' => fn ($query) => $query->whereHas('order', fn ($query) => $query->billable())], 'quantity')
+            ->orderBy('id')->get()
             ->map(fn (Product $product): array => $product->toCatalogArray())->all()) ?? self::withImage(self::seedProducts()));
     }
 
@@ -50,6 +59,100 @@ class Catalog
     public static function deals(): array
     {
         return array_values(array_filter(self::products(), fn ($p) => $p['off'] > 0));
+    }
+
+    /**
+     * Highest real discount of a category ("all" for the whole shop), used by "auto:" badges.
+     */
+    public static function bestDiscount(string $category = 'all'): int
+    {
+        return (int) collect(self::products())
+            ->when($category !== 'all', fn ($products) => $products->where('category', $category))
+            ->max('off');
+    }
+
+    /**
+     * Resolves a badge setting: free text, or "auto:category" for the best real discount.
+     *
+     * @return array{type: string, value: string}|null
+     */
+    public static function badge(?string $badge): ?array
+    {
+        $badge = trim((string) $badge);
+
+        if ($badge === '') {
+            return null;
+        }
+
+        if (str_starts_with($badge, 'auto:')) {
+            $discount = self::bestDiscount(substr($badge, 5));
+
+            return $discount > 0 ? ['type' => 'discount', 'value' => $discount.' %'] : null;
+        }
+
+        return ['type' => 'text', 'value' => Setting::interpolate($badge)];
+    }
+
+    /**
+     * Real figures for the homepage stats.
+     */
+    public static function stat(string $source, mixed $fixed = null): int
+    {
+        if ($source === 'fixed') {
+            return (int) $fixed;
+        }
+
+        if (! config('shop.catalog_from_db')) {
+            return match ($source) {
+                'products' => count(self::products()),
+                'brands' => count(self::brands()),
+                default => 0,
+            };
+        }
+
+        try {
+            return match ($source) {
+                'customers' => Customer::query()->count(),
+                'products' => Product::query()->active()->count(),
+                'brands' => Brand::query()->active()->count(),
+                'orders' => Order::query()->where('status', OrderStatus::Delivered)->count(),
+                default => 0,
+            };
+        } catch (Throwable) {
+            return 0;
+        }
+    }
+
+    /**
+     * Latest real purchases for the "recently bought" popup: city and product only, never the customer's name.
+     *
+     * @return list<array{city: string, slug: string, minutes: int}>
+     */
+    public static function recentSales(): array
+    {
+        if (! config('shop.catalog_from_db') || ! Setting::get('recent_sales_enabled')) {
+            return [];
+        }
+
+        try {
+            return OrderItem::query()
+                ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                ->join('products', 'products.id', '=', 'order_items.product_id')
+                ->where('products.is_active', true)
+                ->where('orders.status', '!=', OrderStatus::Cancelled->value)
+                ->where('orders.placed_at', '>=', now()->subDays((int) Setting::get('recent_sales_days')))
+                ->latest('orders.placed_at')
+                ->limit(20)
+                ->get(['orders.shipping_city', 'orders.placed_at', 'products.slug'])
+                ->map(fn ($row): array => [
+                    'city' => (string) ($row->shipping_city ?: Setting::get('delivery_zone')),
+                    'slug' => $row->slug,
+                    'minutes' => (int) Carbon::parse($row->placed_at)->diffInMinutes(now()),
+                ])
+                ->all();
+        } catch (Throwable) {
+            return [];
+        }
     }
 
     /**
@@ -78,14 +181,14 @@ class Catalog
     public static function seedCategories(): array
     {
         return [
-            ['slug' => 'entretien', 'name' => 'Entretien ménager',       'icon' => 'leaf', 'bg' => '#fdf1d6'],
-            ['slug' => 'lessive',   'name' => 'Lessives & linge',        'icon' => 'leaf', 'bg' => '#e8eef8'],
-            ['slug' => 'cuisine',   'name' => 'Cuisine & vaisselle',     'icon' => 'leaf', 'bg' => '#fbf1df'],
-            ['slug' => 'maison',    'name' => 'Maison & rangement',      'icon' => 'leaf', 'bg' => '#e7eef2'],
-            ['slug' => 'bain',      'name' => 'Salle de bain',           'icon' => 'leaf', 'bg' => '#f3f1ee'],
-            ['slug' => 'hygiene',   'name' => 'Hygiène & désinfection',  'icon' => 'leaf', 'bg' => '#e6f2ea'],
-            ['slug' => 'soins',     'name' => 'Soins personnels',        'icon' => 'leaf', 'bg' => '#f1f1f1'],
-            ['slug' => 'bienetre',  'name' => 'Bien-être & cheveux',     'icon' => 'leaf', 'bg' => '#f3ece3'],
+            ['slug' => 'entretien', 'name' => 'Entretien ménager',       'icon' => 'leaf', 'bg' => '#fdf1d6', 'image' => 'img/clean/cat-1.jpg'],
+            ['slug' => 'lessive',   'name' => 'Lessives & linge',        'icon' => 'leaf', 'bg' => '#e8eef8', 'image' => 'img/clean/cat-2.jpg'],
+            ['slug' => 'cuisine',   'name' => 'Cuisine & vaisselle',     'icon' => 'leaf', 'bg' => '#fbf1df', 'image' => 'img/clean/cat-3.jpg'],
+            ['slug' => 'maison',    'name' => 'Maison & rangement',      'icon' => 'leaf', 'bg' => '#e7eef2', 'image' => 'img/clean/cat-4.jpg'],
+            ['slug' => 'bain',      'name' => 'Salle de bain',           'icon' => 'leaf', 'bg' => '#f3f1ee', 'image' => 'img/clean/cat-5.jpg'],
+            ['slug' => 'hygiene',   'name' => 'Hygiène & désinfection',  'icon' => 'leaf', 'bg' => '#e6f2ea', 'image' => 'img/clean/cat-6.jpg'],
+            ['slug' => 'soins',     'name' => 'Soins personnels',        'icon' => 'leaf', 'bg' => '#f1f1f1', 'image' => 'img/clean/cat-7.jpg'],
+            ['slug' => 'bienetre',  'name' => 'Bien-être & cheveux',     'icon' => 'leaf', 'bg' => '#f3ece3', 'image' => 'img/clean/cat-8.jpg'],
         ];
     }
 

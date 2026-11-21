@@ -23,6 +23,10 @@ class EnsureUserCanAccessAdmin
         $user = $request->user();
 
         if (! $user || ! $user->canAccessAdmin()) {
+            if ($request->expectsJson()) {
+                abort(401, 'Authentification requise.');
+            }
+
             Auth::logout();
 
             return redirect()->guest(route('admin.login'));

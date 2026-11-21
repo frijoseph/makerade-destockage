@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', $title.' — Makerade Destockage')
+@section('title', $title)
 
 @section('content')
 @include('partials.page-head')

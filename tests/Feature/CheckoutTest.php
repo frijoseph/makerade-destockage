@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Setting;
 use App\OrderChannel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -29,7 +30,7 @@ class CheckoutTest extends TestCase
 
     public function test_storefront_cart_becomes_an_order_with_server_prices(): void
     {
-        config(['shop.shipping_fee' => 3, 'shop.free_shipping_threshold' => 1000]);
+        Setting::putMany(['shipping_fee' => 3, 'free_shipping_threshold' => 1000]);
         $product = Product::factory()->create(['slug' => 'savon-test', 'price' => 2, 'stock' => 9]);
 
         $response = $this->postJson(route('checkout.store'), $this->payload(['savon-test' => 4]) + ['price' => 0.01]);

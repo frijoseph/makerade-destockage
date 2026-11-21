@@ -80,6 +80,14 @@
                 <label class="field span-2"><span>Texte sur l’étiquette <em>(facultatif)</em></span><input type="text" name="label" value="{{ old('label', $product->label) }}" maxlength="255"></label>
             </div>
         </section>
+
+        <section class="card">
+            <header class="card-head"><h2>Avis clients</h2></header>
+            <div class="form-grid">
+                <label class="field"><span>Note moyenne <em>(sur 5)</em></span><input type="number" name="rating" value="{{ old('rating', $product->rating) }}" min="0" max="5" step="0.1"></label>
+                <label class="field"><span>Nombre d’avis</span><input type="number" name="reviews" value="{{ old('reviews', $product->reviews ?? 0) }}" min="0" step="1"><small>0 = les étoiles ne sont pas affichées.</small></label>
+            </div>
+        </section>
     </div>
 
     <div class="stack">

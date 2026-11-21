@@ -9,7 +9,7 @@
 
 @section('content')
 <section class="card" style="max-width: 760px">
-    <form method="POST" action="{{ $isNew ? route('admin.categories.store') : route('admin.categories.update', $category) }}" class="form">
+    <form method="POST" enctype="multipart/form-data" action="{{ $isNew ? route('admin.categories.store') : route('admin.categories.update', $category) }}" class="form">
         @csrf
         @unless ($isNew) @method('PUT') @endunless
         <div class="form-grid">
@@ -20,6 +20,13 @@
             </div>
             <label class="field"><span>Ordre d’affichage</span><input type="number" name="position" value="{{ old('position', $category->position) }}" required min="0"></label>
             <label class="field span-2"><span>Description <em>(facultatif)</em></span><textarea name="description" rows="3">{{ old('description', $category->description) }}</textarea></label>
+            <div class="field span-2"><span>Image (accueil et menu)</span>
+                <div class="image-field">
+                    <span class="image-thumb" id="catImg">@if ($url = \App\Models\Setting::imageUrl($category->image))<img src="{{ $url }}" alt="">@else<x-admin.icon name="image" :size="22" />@endif</span>
+                    <input type="file" name="image_file" accept="image/*" data-image-input="#catImg" aria-label="Image de la catégorie">
+                    @if ($category->image)<label class="check"><input type="checkbox" name="remove_image" value="1"> Retirer</label>@endif
+                </div>
+            </div>
         </div>
         <input type="hidden" name="is_active" value="0">
         <label class="check"><input type="checkbox" name="is_active" value="1" @checked(old('is_active', $category->is_active))> Visible sur la boutique</label>

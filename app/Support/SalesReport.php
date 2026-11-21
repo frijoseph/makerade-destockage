@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Category;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -165,6 +166,54 @@ class SalesReport
             ->sortByDesc('sold')
             ->take($limit)
             ->values();
+    }
+
+    /**
+     * Best-selling products over the period (units and revenue).
+     *
+     * @return Collection<int, array{name: string, variant: string, image: string|null, units: int, revenue: float}>
+     */
+    public function topProducts(int $limit = 5): Collection
+    {
+        $rows = OrderItem::query()
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->whereIn('orders.status', $this->billableValues())
+            ->whereBetween('orders.placed_at', [$this->from, $this->to])
+            ->whereNotNull('order_items.product_id')
+            ->groupBy('order_items.product_id')
+            ->selectRaw('order_items.product_id as product_id, SUM(order_items.quantity) as units, SUM(order_items.line_total) as revenue')
+            ->orderByDesc('units')
+            ->limit($limit)
+            ->get();
+
+        $products = Product::query()->whereIn('id', $rows->pluck('product_id'))->get()->keyBy('id');
+
+        return $rows->map(fn ($row): array => [
+            'id' => (int) $row->product_id,
+            'name' => $products[$row->product_id]->name ?? 'Produit supprimé',
+            'variant' => $products[$row->product_id]->variant ?? '',
+            'image' => $products[$row->product_id]?->image_url,
+            'units' => (int) $row->units,
+            'revenue' => (float) $row->revenue,
+        ])->values();
+    }
+
+    /**
+     * Orders placed over the period, by status.
+     *
+     * @return Collection<string, int>
+     */
+    public function ordersByStatus(): Collection
+    {
+        $counts = Order::query()->whereBetween('placed_at', [$this->from, $this->to])
+            ->selectRaw('status, COUNT(*) as aggregate')->groupBy('status')->pluck('aggregate', 'status');
+
+        return collect(OrderStatus::cases())->mapWithKeys(fn (OrderStatus $status): array => [$status->value => (int) ($counts[$status->value] ?? 0)]);
+    }
+
+    public function newCustomers(): int
+    {
+        return Customer::query()->whereBetween('created_at', [$this->from, $this->to])->count();
     }
 
     /**

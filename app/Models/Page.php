@@ -1,0 +1,64 @@
+<?php
+
+namespace App\Models;
+
+use App\PageType;
+use Database\Factories\PageFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
+
+#[Fillable(['type', 'slug', 'title', 'tag', 'excerpt', 'body', 'cover', 'cover_color', 'icon', 'is_published', 'published_at'])]
+class Page extends Model
+{
+    /** @use HasFactory<PageFactory> */
+    use HasFactory;
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'type' => PageType::class,
+            'is_published' => 'boolean',
+            'published_at' => 'datetime',
+        ];
+    }
+
+    /**
+     * @param  Builder<Page>  $query
+     */
+    public function scopePublished(Builder $query): void
+    {
+        $query->where('is_published', true)
+            ->where(fn (Builder $query) => $query->whereNull('published_at')->orWhere('published_at', '<=', now()));
+    }
+
+    /**
+     * @param  Builder<Page>  $query
+     */
+    public function scopeOfType(Builder $query, PageType $type): void
+    {
+        $query->where('type', $type);
+    }
+
+    /**
+     * Body written in Markdown, with {placeholders} replaced by the current shop settings.
+     */
+    public function renderedBody(): HtmlString
+    {
+        return new HtmlString(Str::markdown(Setting::interpolate($this->body), [
+            'html_input' => 'strip',
+            'allow_unsafe_links' => false,
+        ]));
+    }
+
+    public function url(): string
+    {
+        return $this->type === PageType::Article ? route('blog.show', $this->slug) : route('info', $this->slug);
+    }
+}

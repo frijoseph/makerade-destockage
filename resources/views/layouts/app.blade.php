@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="fr" {!! Route::currentRouteName() === 'home' ? 'data-home' : '' !!}>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" {!! Route::currentRouteName() === 'home' ? 'data-home' : '' !!}>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Makerade Destockage — Entretien & bien-être à prix déstockés')</title>
-    <meta name="description" content="Makerade Destockage — le déstockage au meilleur prix : tous vos produits du quotidien à prix cassés. Livraison rapide, retours faciles.">
-    <meta name="theme-color" content="#1f7a34">
-    <link rel="icon" type="image/png" href="{{ asset('img/favicon.png') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@hasSection('title')@yield('title') — {{ $shop->shop_name }}@else{{ $shop->shop_name }}@endif</title>
+    <meta name="description" content="{{ $shop->text('meta_description') }}">
+    <meta name="theme-color" content="{{ $shop->theme_color }}">
+    <link rel="icon" href="{{ $shop->image('favicon') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,12 +15,17 @@
     <link rel="stylesheet" href="{{ asset('css/fresh.css') }}?v={{ filemtime(public_path('css/fresh.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/fx.css') }}?v={{ filemtime(public_path('css/fx.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/live.css') }}?v={{ filemtime(public_path('css/live.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/promo.css') }}?v={{ filemtime(public_path('css/promo.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/notify.css') }}?v={{ filemtime(public_path('css/notify.css')) }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.default.min.css">
+    <link rel="stylesheet" href="{{ asset('css/selects.css') }}?v={{ filemtime(public_path('css/selects.css')) }}">
     <script>try{if(!sessionStorage.getItem('mk_splash')&&document.documentElement.hasAttribute('data-home'))document.documentElement.classList.add('splash-on')}catch(e){}</script>
 </head>
 <body data-page="{{ Route::currentRouteName() }}">
 <div class="progress" id="progress"></div>
-<div class="splash" id="splash" aria-hidden="true"><div class="bubbles" data-bubbles="18"></div><img src="{{ asset('img/logo.png') }}" alt=""></div>
+<div class="splash" id="splash" aria-hidden="true"><div class="bubbles" data-bubbles="18"></div><img src="{{ $shop->image('logo') }}" alt=""></div>
 
+@include('partials.announcement')
 @include('partials.header')
 
 <main id="main" class="page">
@@ -28,14 +34,43 @@
 
 @include('partials.footer')
 
-<script id="catalog" type="application/json">{!! json_encode(collect(\App\Support\Catalog::products())->keyBy("slug")->all(), JSON_HEX_TAG) !!}</script>
-<script>window.MK_BASE="{{ rtrim(url('/'), '/') }}";window.MK_CHECKOUT={!! json_encode(['url' => route('checkout.store'), 'token' => csrf_token()]) !!};window.MK_SHIPPING={!! json_encode(['fee' => (float) \App\Models\Setting::get('shipping_fee'), 'freeFrom' => (float) \App\Models\Setting::get('free_shipping_threshold')]) !!};</script>
+<script id="catalog" type="application/json">{!! json_encode(collect(\App\Support\Catalog::products())->keyBy('slug')->all(), JSON_HEX_TAG) !!}</script>
+<script>
+window.MK_BASE = @json(rtrim(url('/'), '/'));
+window.MK_SHOP = {!! json_encode($shop->forScripts() + [
+    'token' => csrf_token(),
+    'endpoints' => [
+        'checkout' => route('checkout.store'),
+        'contact' => route('contact.store'),
+        'newsletter' => route('newsletter.store'),
+        'track' => route('track.lookup'),
+        'coupon' => route('promo.coupon'),
+        'spin' => route('wheel.spin'),
+        'popupEvent' => url('/popups'),
+        'account' => route('account'),
+    ],
+], JSON_HEX_TAG | JSON_UNESCAPED_UNICODE) !!};
+window.mkMoney = function (n) {
+    var m = window.MK_SHOP.money, parts = Math.abs(Number(n) || 0).toFixed(m.decimals).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, m.thousands);
+    var s = (Number(n) < 0 ? '-' : '') + parts.join(m.decimal);
+    return m.position === 'after' ? s + ' ' + m.symbol : m.symbol + s;
+};
+</script>
+@include('partials.mobile-nav')
+@include('partials.floating')
 <div class="toast-wrap" id="toasts" aria-live="polite"></div>
 <button class="to-top" id="toTop" aria-label="Retour en haut"><x-icon name="chev-down" style="transform:rotate(180deg)" /></button>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
+@include('partials.flash')
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script src="{{ asset('js/notify.js') }}?v={{ filemtime(public_path('js/notify.js')) }}" defer></script>
+<script src="{{ asset('js/selects.js') }}?v={{ filemtime(public_path('js/selects.js')) }}" defer></script>
 <script src="{{ asset('js/app.js') }}?v={{ filemtime(public_path('js/app.js')) }}" defer></script>
 <script src="{{ asset('js/fx.js') }}?v={{ filemtime(public_path('js/fx.js')) }}" defer></script>
 <script src="{{ asset('js/live.js') }}?v={{ filemtime(public_path('js/live.js')) }}" defer></script>
+<script src="{{ asset('js/promo.js') }}?v={{ filemtime(public_path('js/promo.js')) }}" defer></script>
 @stack('scripts')
 </body>
 </html>
