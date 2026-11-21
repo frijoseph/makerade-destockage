@@ -6,34 +6,44 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 /**
  * Source unique du catalogue.
- * - Lit MySQL si les tables sont migrées et remplies.
- * - Sinon, utilise les données intégrées (le site fonctionne dès l'installation).
+ * - Lit MySQL (produits actifs uniquement) quand CATALOG_USE_DB=true et que les tables sont remplies.
+ * - Sinon, utilise les données intégrées (le site fonctionne dès l'installation, et l'export statique aussi).
  */
 class Catalog
 {
     public static function categories(): array
     {
-        return self::fromDb(Category::class) ?? self::seedCategories();
+        return once(fn (): array => self::fromDb('categories', fn (): array => Category::query()->active()
+            ->orderBy('position')->orderBy('id')->get()
+            ->map(fn (Category $category): array => $category->toCatalogArray())->all()) ?? self::seedCategories());
     }
 
     public static function brands(): array
     {
-        return self::fromDb(Brand::class) ?? self::seedBrands();
+        return once(fn (): array => self::fromDb('brands', fn (): array => Brand::query()->active()
+            ->orderBy('id')->get()
+            ->map(fn (Brand $brand): array => $brand->toCatalogArray())->all()) ?? self::seedBrands());
     }
 
     public static function products(): array
     {
-        return self::withImage(self::fromDb(Product::class) ?? self::seedProducts());
+        return once(fn (): array => self::fromDb('products', fn (): array => Product::query()->active()
+            ->with(['brand', 'category'])->orderBy('id')->get()
+            ->map(fn (Product $product): array => $product->toCatalogArray())->all()) ?? self::withImage(self::seedProducts()));
     }
 
     public static function product(string $slug): ?array
     {
         foreach (self::products() as $p) {
-            if ($p['slug'] === $slug) return $p;
+            if ($p['slug'] === $slug) {
+                return $p;
+            }
         }
+
         return null;
     }
 
@@ -42,29 +52,25 @@ class Catalog
         return array_values(array_filter(self::products(), fn ($p) => $p['off'] > 0));
     }
 
-    private static bool $dbDown = false;
-    private static array $memo = [];
-
-    private static function fromDb(string $model): ?array
+    /**
+     * Runs a catalogue query against MySQL; null means "use the bundled data".
+     *
+     * @param  callable(): array<int, array<string, mixed>>  $query
+     * @return array<int, array<string, mixed>>|null
+     */
+    private static function fromDb(string $table, callable $query): ?array
     {
-        if (self::$dbDown) return null;
-        if (array_key_exists($model, self::$memo)) return self::$memo[$model];
-        return self::$memo[$model] = self::query($model);
-    }
-
-    private static function query(string $model): ?array
-    {
-        if (! config('catalog.use_db', env('CATALOG_USE_DB', false))) {
-            self::$dbDown = true;   // MySQL désactivé : on utilise les données intégrées
+        if (! config('shop.catalog_from_db')) {
             return null;
         }
+
         try {
-            $table = (new $model)->getTable();
-            if (! Schema::hasTable($table)) return null;
-            $rows = $model::query()->orderBy('id')->get()->map->toArray()->all();
-            return $rows ?: null;
-        } catch (\Throwable $e) {
-            self::$dbDown = true;
+            if (! Schema::hasTable($table)) {
+                return null;
+            }
+
+            return $query() ?: null;
+        } catch (Throwable) {
             return null;
         }
     }
@@ -137,6 +143,7 @@ class Catalog
             if (isset($p['slug']) && is_file(public_path("img/products/{$p['slug']}.jpg"))) {
                 $p['image'] = asset("img/products/{$p['slug']}.jpg");
             }
+
             return $p;
         }, $rows);
     }

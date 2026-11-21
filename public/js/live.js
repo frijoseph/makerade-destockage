@@ -62,8 +62,9 @@
         <div class="mi-r"><div class="mi-q"><button data-ms="-1" aria-label="Moins">−</button><span>${q}</span><button data-ms="1" aria-label="Plus">+</button></div><button class="mi-x" data-mrm>Retirer</button></div></div>`;
     }).join('') : '<div class="mini-empty"><span class="big">🧴</span>Votre panier est vide.<br>Ajoutez des produits pour commencer.</div>';
     const sub = st.sub(); $('#miniTotal').textContent = money(sub);
-    $('#miniBar').style.width = Math.min(100, sub / 49 * 100) + '%';
-    $('#miniNote').textContent = !sub ? '' : sub >= 49 ? '🎉 Livraison gratuite débloquée !' : `Ajoutez ${money(49 - sub)} pour la livraison gratuite.`;
+    const FREE = window.MK_SHIPPING?.freeFrom ?? 49;
+    $('#miniBar').style.width = (FREE ? Math.min(100, sub / FREE * 100) : 0) + '%';
+    $('#miniNote').textContent = !sub || !FREE ? '' : sub >= FREE ? '🎉 Livraison gratuite débloquée !' : `Ajoutez ${money(FREE - sub)} pour la livraison gratuite.`;
   };
   el.addEventListener('click', e => {
     if (e.target.closest('[data-mclose]')) return close();

@@ -5,7 +5,7 @@
   const $ = (s, c = document) => c.querySelector(s);
   const $$ = (s, c = document) => [...c.querySelectorAll(s)];
   const money = n => '$' + Number(n).toFixed(2);
-  const FREE_SHIP = 49, SHIP_FEE = 4.99;
+  const FREE_SHIP = window.MK_SHIPPING?.freeFrom ?? 49, SHIP_FEE = window.MK_SHIPPING?.fee ?? 4.99;
   const safe = (fn, d) => { try { return fn(); } catch (e) { return d; } };
   const load = (k, d) => safe(() => JSON.parse(localStorage.getItem(k)) ?? d, d);
   const save = (k, v) => safe(() => localStorage.setItem(k, JSON.stringify(v)));
@@ -186,11 +186,11 @@
           <button class="rm" data-rm="${id}">Retirer</button></div></div>`;
       }).join('');
     }
-    const sub = store.sub(), ship = sub === 0 || sub >= FREE_SHIP ? 0 : SHIP_FEE;
+    const sub = store.sub(), ship = sub === 0 || (FREE_SHIP > 0 && sub >= FREE_SHIP) ? 0 : SHIP_FEE;
     $('[data-sub]').textContent = money(sub); $('[data-ship]').textContent = ship ? money(ship) : 'Gratuite';
     $('[data-grand]').textContent = money(sub + ship);
-    $('#shipBar').style.width = Math.min(100, sub / FREE_SHIP * 100) + '%';
-    $('#shipNote').textContent = sub === 0 ? '' : sub >= FREE_SHIP ? '🎉 Livraison gratuite débloquée !' : `Ajoutez ${money(FREE_SHIP - sub)} pour la livraison gratuite.`;
+    $('#shipBar').style.width = (FREE_SHIP ? Math.min(100, sub / FREE_SHIP * 100) : 0) + '%';
+    $('#shipNote').textContent = sub === 0 || !FREE_SHIP ? '' : sub >= FREE_SHIP ? '🎉 Livraison gratuite débloquée !' : `Ajoutez ${money(FREE_SHIP - sub)} pour la livraison gratuite.`;
   }
   list?.addEventListener('click', e => {
     const row = e.target.closest('.citem'); if (!row) return; const id = row.dataset.id;
@@ -198,7 +198,36 @@
     if (c) { store.cart[id] = Math.max(1, store.cart[id] + +c.dataset.c); store.sync(); renderCart(); }
     if (rm) { row.classList.add('out'); setTimeout(() => { delete store.cart[id]; store.sync(); renderCart(); }, 330); }
   });
-  $('#checkout')?.addEventListener('click', () => store.count() ? toast('Paiement en démonstration — bientôt disponible.') : toast('Votre panier est vide.'));
+  /* ---------- checkout : envoie le panier au serveur (prix recalculés côté serveur) ---------- */
+  const coForm = $('#checkoutForm'), coBtn = $('#checkout'), coErr = $('#checkoutErr');
+  coBtn?.addEventListener('click', () => {
+    if (!store.count()) return toast('Votre panier est vide.');
+    if (!window.MK_CHECKOUT || !coForm) return toast('La commande en ligne arrive bientôt.');
+    coBtn.hidden = true; coForm.hidden = false; $('input', coForm).focus();
+  });
+  coForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    coErr.hidden = true;
+    if (!valid(coForm)) return;
+    const items = Object.fromEntries(Object.entries(store.cart).filter(([k, q]) => CATALOG[k] && q > 0));
+    if (!Object.keys(items).length) return toast('Votre panier est vide.');
+    const submit = $('#checkoutSubmit', coForm); submit.disabled = true; submit.textContent = 'Envoi en cours…';
+    try {
+      const res = await fetch(window.MK_CHECKOUT.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': window.MK_CHECKOUT.token },
+        body: JSON.stringify({ ...Object.fromEntries(new FormData(coForm)), items }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 419) throw new Error('Votre session a expiré : rechargez la page puis réessayez.');
+      if (!res.ok) throw new Error(data.errors ? Object.values(data.errors)[0][0] : (data.message || 'La commande n’a pas pu être enregistrée.'));
+      store.cart = {}; store.sync();
+      location.href = data.redirect;
+    } catch (err) {
+      coErr.textContent = err.message === 'Failed to fetch' ? 'Connexion impossible. Vérifiez votre réseau et réessayez.' : err.message;
+      coErr.hidden = false; submit.disabled = false; submit.textContent = 'Confirmer la commande';
+    }
+  });
 
   /* ---------- wishlist page ---------- */
   function renderWishlist() {

@@ -29,7 +29,7 @@
 @include('partials.footer')
 
 <script id="catalog" type="application/json">{!! json_encode(collect(\App\Support\Catalog::products())->keyBy("slug")->all(), JSON_HEX_TAG) !!}</script>
-<script>window.MK_BASE="{{ rtrim(url('/'), '/') }}";</script>
+<script>window.MK_BASE="{{ rtrim(url('/'), '/') }}";window.MK_CHECKOUT={!! json_encode(['url' => route('checkout.store'), 'token' => csrf_token()]) !!};window.MK_SHIPPING={!! json_encode(['fee' => (float) \App\Models\Setting::get('shipping_fee'), 'freeFrom' => (float) \App\Models\Setting::get('free_shipping_threshold')]) !!};</script>
 <div class="toast-wrap" id="toasts" aria-live="polite"></div>
 <button class="to-top" id="toTop" aria-label="Retour en haut"><x-icon name="chev-down" style="transform:rotate(180deg)" /></button>
 
