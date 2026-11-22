@@ -44,6 +44,19 @@ class CheckoutTest extends TestCase
         $this->get($response->json('redirect'))->assertOk()->assertSee($order->number);
     }
 
+    public function test_guests_can_order_without_an_account_and_are_invited_to_create_one(): void
+    {
+        Setting::putMany(['confirm_account_cta' => 'Créez votre compte gratuit', 'checkout_guest_note' => 'Commande sans compte possible']);
+        Product::factory()->create(['slug' => 'savon-test', 'stock' => 5]);
+
+        $this->assertGuest();
+        $this->get(route('cart'))->assertOk()->assertSee('Commande sans compte possible');
+
+        $redirect = $this->postJson(route('checkout.store'), $this->payload(['savon-test' => 1]))->assertCreated()->json('redirect');
+
+        $this->get($redirect)->assertOk()->assertSee('Créez votre compte gratuit')->assertSee('Suivre ma commande');
+    }
+
     public function test_order_confirmation_requires_a_signed_link(): void
     {
         Product::factory()->create(['slug' => 'savon-test']);

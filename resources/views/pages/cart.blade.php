@@ -46,6 +46,7 @@
                         @endforeach
                     </div>
                 </fieldset>
+                @if (trim((string) $shop->checkout_guest_note) !== '' && ! auth()->check())<p class="guest-note"><x-icon name="check" :size="16" /> {{ $shop->text('checkout_guest_note') }}</p>@endif
                 <p class="checkout-hint">{{ $shop->text('checkout_hint') }}</p>
                 <p class="checkout-err" id="checkoutErr" role="alert" hidden></p>
                 <button class="btn btn-primary btn-lg block" id="checkoutSubmit">Confirmer la commande</button>

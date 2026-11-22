@@ -100,6 +100,8 @@ class SettingsSchema
                     'return_days' => ['type' => 'number', 'label' => 'Délai de retour (jours)', 'default' => 30, 'rules' => ['required', 'integer', 'min:0']],
                     'restrict_to_zones' => ['type' => 'boolean', 'label' => 'Livrer uniquement les villes du tableau ci-dessus', 'help' => 'Si activé, une commande vers une ville absente du tableau est refusée.', 'default' => false],
                     'default_city' => ['type' => 'text', 'label' => 'Ville pré-remplie au panier', 'default' => 'Abidjan'],
+                    'checkout_guest_note' => ['type' => 'text', 'label' => 'Mention « commande sans compte » (panier)', 'help' => 'Affichée au-dessus du bouton de confirmation aux visiteurs non connectés. Vide = masquée.', 'default' => 'Pas besoin de compte : votre nom, téléphone et adresse suffisent.'],
+                    'confirm_account_cta' => ['type' => 'text', 'label' => 'Invitation à créer un compte (page de confirmation)', 'help' => 'Montrée aux visiteurs sans compte après leur commande. Vide = masquée.', 'default' => 'Créez un compte gratuit pour suivre vos commandes et recommander en un clic.'],
                     'checkout_hint' => ['type' => 'textarea', 'label' => 'Message sous le formulaire de commande', 'default' => 'Nous vous appelons pour confirmer la commande avant la livraison.'],
                     'product_perks' => ['type' => 'list', 'label' => 'Garanties affichées sur la fiche produit', 'default' => [
                         ['icon' => 'truck', 'text' => 'Livraison gratuite dès {free_shipping_threshold} d’achat'],
