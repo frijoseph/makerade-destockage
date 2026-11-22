@@ -21,6 +21,31 @@
   $('[data-side-open]')?.addEventListener('click', () => document.body.classList.add('side-open'));
   $('[data-side-close]')?.addEventListener('click', () => document.body.classList.remove('side-open'));
 
+  /* ---------- sidebar repliable (icônes toujours visibles) ---------- */
+  const collapse = $('[data-side-collapse]');
+  const syncCollapse = () => {
+    const mini = root.classList.contains('side-mini');
+    collapse?.setAttribute('aria-expanded', mini ? 'false' : 'true');
+    collapse?.setAttribute('aria-label', mini ? 'Déplier le menu' : 'Replier le menu');
+    collapse?.setAttribute('title', mini ? 'Déplier le menu' : 'Replier le menu');
+  };
+  collapse?.addEventListener('click', () => {
+    root.classList.toggle('side-mini');
+    try { localStorage.setItem('mk_side_collapsed', root.classList.contains('side-mini') ? '1' : '0'); } catch (e) {}
+    syncCollapse();
+  });
+  syncCollapse();
+
+  /* ---------- champs affichés selon un autre réglage (data-show-when="reglage=valeur") ---------- */
+  $$('[data-show-when]').forEach(wrap => {
+    const [key, expected] = wrap.dataset.showWhen.split('=');
+    const source = $('[name="settings[' + key + ']"]');
+    if (!source) return;
+    const sync = () => { wrap.style.display = source.value === expected ? 'contents' : 'none'; };
+    source.addEventListener('change', sync);
+    sync();
+  });
+
   /* ---------- notifications (menu déroulant) ---------- */
   const notif = $('[data-notif]');
   if (notif) {

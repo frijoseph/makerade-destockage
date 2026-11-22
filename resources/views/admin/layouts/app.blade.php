@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="{{ asset('css/notify.css') }}?v={{ filemtime(public_path('css/notify.css')) }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.default.min.css" integrity="sha384-86bgzEpZNdMv4V0h2BgSxQUadlX29O0I89TbSGZ4gFkGtpN8U+KAGcuDbqMdbl/M" crossorigin="anonymous">
     <link rel="stylesheet" href="{{ asset('css/selects.css') }}?v={{ filemtime(public_path('css/selects.css')) }}">
-    <script>try{var t=localStorage.getItem('mk_admin_theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+    <script>try{var t=localStorage.getItem('mk_admin_theme');if(t)document.documentElement.dataset.theme=t;if(localStorage.getItem('mk_side_collapsed')==='1')document.documentElement.classList.add('side-mini')}catch(e){}</script>
 </head>
 <body class="admin">
 @php
@@ -59,13 +59,14 @@
         <img src="{{ \App\Models\Setting::imageUrl(\App\Models\Setting::get('logo')) }}" alt="" width="46" height="40">
         <span><b>{{ $shopName }}</b><small>Administration</small></span>
     </a>
+    <button type="button" class="side-collapse" data-side-collapse aria-label="Replier le menu" aria-expanded="true" title="Replier le menu"><x-admin.icon name="chev-left" :size="18" /></button>
 
     <nav class="side-nav" aria-label="Navigation de l'administration">
         @foreach ($groups as $group)
             @if ($group['label'])<p class="nav-title">{{ $group['label'] }}</p>@endif
             @foreach ($group['links'] as [$route, $pattern, $icon, $label, $count])
                 @php $isCurrent = request()->routeIs(...explode('|', $pattern)); @endphp
-                <a href="{{ route($route) }}" data-nav="{{ $label }}" @class(['is-active' => $isCurrent]) @if ($isCurrent) aria-current="page" @endif>
+                <a href="{{ route($route) }}" data-nav="{{ $label }}" title="{{ $label }}" @class(['is-active' => $isCurrent]) @if ($isCurrent) aria-current="page" @endif>
                     <x-admin.icon :name="$icon" />
                     <span>{{ $label }}</span>
                     @if ($count)<em>{{ $count }}</em>@endif
@@ -81,14 +82,6 @@
             <x-admin.icon name="sun" :size="20" />
             <button type="button" class="switch" data-theme-toggle role="switch" aria-checked="false" aria-label="Mode sombre"><i></i></button>
             <x-admin.icon name="moon" :size="18" />
-        </div>
-        <div class="side-user">
-            <span class="avatar">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</span>
-            <span><b>{{ $user->name }}</b><small>{{ $user->role->label() }}</small></span>
-            <form method="POST" action="{{ route('admin.logout') }}" data-confirm="Vous allez être déconnecté de l’administration." data-confirm-title="Se déconnecter ?" data-confirm-button="Me déconnecter">
-                @csrf
-                <button class="icon-btn" title="Déconnexion" aria-label="Déconnexion"><x-admin.icon name="logout" :size="18" /></button>
-            </form>
         </div>
     </div>
 </aside>
@@ -119,6 +112,14 @@
                         <p class="notif-empty"><x-admin.icon name="check" :size="20" :stroke="2.4" /> Tout est à jour.</p>
                     @endforelse
                 </div>
+            </div>
+            <div class="top-user">
+                <span class="avatar">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</span>
+                <span class="top-user-name"><b>{{ $user->name }}</b><small>{{ $user->role->label() }}</small></span>
+                <form method="POST" action="{{ route('admin.logout') }}" data-confirm="Vous allez être déconnecté de l’administration." data-confirm-title="Se déconnecter ?" data-confirm-button="Me déconnecter">
+                    @csrf
+                    <button class="icon-btn" title="Déconnexion" aria-label="Déconnexion"><x-admin.icon name="logout" :size="18" /></button>
+                </form>
             </div>
         </div>
     </header>

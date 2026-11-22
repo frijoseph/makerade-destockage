@@ -200,3 +200,29 @@ button.is-loading::after { content: ""; position: absolute; inset: 0; margin: au
 .ai-line p { margin: 0; white-space: pre-line; }
 .ai-test-out { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--card-2); border: 1px solid var(--line); white-space: pre-line; font-size: 14px; }
 .ai-test-out.is-error { border-color: #e0364b; color: #c62c40; }
+/* Profil et déconnexion dans l'en-tête */
+.top-user { display: flex; align-items: center; gap: 10px; padding: 4px 4px 4px 6px; background: var(--card, #fff); border: 1px solid var(--line, #e6e8f2); border-radius: 14px; }
+.top-user .avatar { width: 36px; height: 36px; font-size: 14px; }
+.top-user-name b { display: block; font-size: 13px; line-height: 1.2; }
+.top-user-name small { display: block; font-size: 11.5px; color: var(--muted); }
+.top-user form { margin: 0; }
+
+/* Sidebar repliable : seules les icônes restent visibles */
+.side-collapse { display: grid; place-items: center; width: 30px; height: 30px; margin-left: auto; border-radius: 9px; border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .06); color: var(--side-text); cursor: pointer; flex: none; }
+.side-collapse:hover { background: rgba(255, 255, 255, .14); color: #fff; }
+.side-collapse .ic { transition: transform .25s; }
+.side { transition: width .25s; }
+@media (min-width: 961px) {
+  .side-mini .side { width: 80px; padding-left: 12px; padding-right: 12px; }
+  .side-mini .side-brand { flex-direction: column; gap: 8px; padding: 0; }
+  .side-mini .side-brand span, .side-mini .nav-title, .side-mini .side-nav a > span, .side-mini .theme-switch .ic:not(:first-child) { display: none; }
+  .side-mini .side-collapse { margin: 0; }
+  .side-mini .side-collapse .ic { transform: rotate(180deg); }
+  .side-mini .side-nav a { justify-content: center; padding: 12px 0; }
+  .side-mini .side-nav a em { position: absolute; top: 2px; right: 8px; margin: 0; min-width: 16px; height: 16px; padding: 0 4px; font-size: 10px; line-height: 16px; }
+  .side-mini .theme-switch { justify-content: center; padding: 0; }
+  .side-mini .theme-switch > .ic { display: none; }
+  .side-mini .side-foot { padding: 0; }
+}
+@media (max-width: 960px) { .side-collapse { display: none; } .top-user-name { display: none; } }
+@media (max-width: 640px) { .top-user { margin-left: auto; } }

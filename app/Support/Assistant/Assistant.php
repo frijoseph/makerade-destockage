@@ -25,23 +25,45 @@ class Assistant
         $conversation = self::conversation($token, $user);
         $history = $conversation ? self::history($conversation) : [];
 
-        if (self::dailyLimitReached()) {
-            return self::fallback($conversation, $message);
-        }
-
         $userMessages = [...array_column(array_filter($history, fn (array $line): bool => $line['role'] === 'user'), 'content'), $message];
+
+        if (! self::usesModel() || self::dailyLimitReached()) {
+            return self::viaBot($conversation, $message, $userMessages, $user);
+        }
 
         try {
             $knowledge = KnowledgeBase::build($userMessages, $user);
             $reply = LlmClient::complete($knowledge['prompt'], self::alternate([...$history, ['role' => 'user', 'content' => $message]]));
         } catch (RuntimeException) {
-            return self::fallback($conversation, $message);
+            // The provider is down or misconfigured: the built-in bot still answers.
+            return self::viaBot($conversation, $message, $userMessages, $user);
         }
 
         $cards = self::cards($reply, $knowledge['products']);
         self::store($conversation, $message, $reply, $cards);
 
         return ['reply' => $reply, 'products' => $cards, 'conversation' => $conversation?->token, 'fallback' => false];
+    }
+
+    /**
+     * The model is used only when the shop chose it AND a key exists; otherwise the built-in bot answers.
+     */
+    public static function usesModel(): bool
+    {
+        return Setting::get('ai_mode') === 'llm' && LlmClient::isConfigured();
+    }
+
+    /**
+     * @param  list<string>  $userMessages
+     * @return array{reply: string, products: list<array<string, mixed>>, conversation: string|null, fallback: bool}
+     */
+    private static function viaBot(?AiConversation $conversation, string $message, array $userMessages, ?User $user): array
+    {
+        $answer = ChatBot::answer($message, $userMessages, $user);
+        $cards = self::cardsFromProducts($answer['products']);
+        self::store($conversation, $message, $answer['reply'], $cards, $answer['unknown']);
+
+        return ['reply' => $answer['reply'], 'products' => $cards, 'conversation' => $conversation?->token, 'fallback' => false];
     }
 
     /**
@@ -117,8 +139,18 @@ class Assistant
     {
         $text = Str::ascii(mb_strtolower($reply));
 
-        return collect($products)
+        return self::cardsFromProducts(collect($products)
             ->filter(fn (array $product): bool => str_contains($text, Str::ascii(mb_strtolower($product['name']))))
+            ->all());
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $products
+     * @return list<array<string, mixed>>
+     */
+    private static function cardsFromProducts(array $products): array
+    {
+        return collect($products)
             ->take(4)
             ->map(fn (array $product): array => [
                 'slug' => $product['slug'],

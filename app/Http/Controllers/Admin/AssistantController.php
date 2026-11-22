@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\AiConversation;
 use App\Models\AiMessage;
 use App\Models\Setting;
+use App\Support\Assistant\Assistant;
+use App\Support\Assistant\ChatBot;
 use App\Support\Assistant\KnowledgeBase;
 use App\Support\Assistant\LlmClient;
 use Illuminate\Http\JsonResponse;
@@ -36,7 +38,8 @@ class AssistantController extends Controller
                 'failed' => AiMessage::query()->where('role', 'assistant')->where('created_at', '>=', now()->subDays(7))->where('meta->fallback', true)->count(),
             ],
             'enabled' => (bool) Setting::get('ai_enabled'),
-            'configured' => LlmClient::isConfigured(),
+            'usesModel' => Assistant::usesModel(),
+            'modelChosen' => Setting::get('ai_mode') === 'llm',
             'limit' => (int) Setting::get('ai_daily_limit'),
         ]);
     }
@@ -62,8 +65,10 @@ class AssistantController extends Controller
     {
         $data = $request->validate(['message' => ['required', 'string', 'max:500']]);
 
-        if (! LlmClient::isConfigured()) {
-            return response()->json(['ok' => false, 'message' => 'Aucune clé API n’est configurée (onglet Assistant IA des paramètres ou variable AI_API_KEY).'], 422);
+        if (! Assistant::usesModel()) {
+            $answer = ChatBot::answer($data['message'], [$data['message']], $request->user());
+
+            return response()->json(['ok' => true, 'reply' => $answer['reply'], 'context_chars' => 0, 'products' => count($answer['products']), 'mode' => 'bot']);
         }
 
         try {

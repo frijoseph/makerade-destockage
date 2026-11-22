@@ -15,10 +15,10 @@
     <x-admin.stat :tone="$stats['failed'] ? 'red' : 'slate'" icon="alert" label="Réponses de secours (7 j)" :value="$stats['failed']" />
 </section>
 
-@if (! $enabled || ! $configured)
+@if (! $enabled || ($modelChosen && ! $usesModel))
     <section class="card" style="border-left: 4px solid var(--accent)">
-        <b>{{ ! $enabled ? 'L’assistant est désactivé.' : 'L’assistant n’a pas de clé API.' }}</b>
-        <p class="muted" style="margin: 4px 0 0">{{ ! $enabled ? 'Activez-le dans les paramètres pour l’afficher aux visiteurs.' : 'Il répond avec le message de secours tant qu’aucune clé n’est enregistrée (paramètres, ou AI_API_KEY dans le fichier .env).' }}</p>
+        <b>{{ ! $enabled ? 'L’assistant est désactivé.' : 'Mode IA choisi mais aucune clé API : le robot intégré répond à la place.' }}</b>
+        <p class="muted" style="margin: 4px 0 0">{{ ! $enabled ? 'Activez-le dans les paramètres pour l’afficher aux visiteurs.' : 'Enregistrez une clé (paramètres ou AI_API_KEY dans .env), ou repassez en « Robot intégré » (sans API).' }}</p>
     </section>
 @endif
 

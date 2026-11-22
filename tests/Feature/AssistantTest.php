@@ -28,7 +28,7 @@ class AssistantTest extends TestCase
         parent::setUp();
 
         config(['shop.catalog_from_db' => true]);
-        Setting::putMany(['ai_enabled' => true, 'ai_api_key' => 'sk-test-secret-key', 'shop_name' => 'Boutique Test', 'ai_name' => 'Léa']);
+        Setting::putMany(['ai_enabled' => true, 'ai_mode' => 'llm', 'ai_api_key' => 'sk-test-secret-key', 'shop_name' => 'Boutique Test', 'ai_name' => 'Léa']);
     }
 
     private function fakeAnthropic(string $text = 'Voici ma réponse.'): void
@@ -157,17 +157,15 @@ class AssistantTest extends TestCase
             && $request['temperature'] === 0.2);
     }
 
-    public function test_provider_errors_and_missing_keys_fall_back_to_the_configured_message(): void
+    public function test_provider_errors_and_missing_keys_fall_back_to_the_built_in_bot(): void
     {
-        Setting::putMany(['ai_fallback_message' => 'Écrivez-nous sur WhatsApp.']);
         Http::fake(['api.anthropic.com/*' => Http::response(['error' => ['message' => 'overloaded']], 529)]);
 
-        $this->ask('Bonjour')->assertOk()->assertJsonPath('fallback', true)->assertJsonPath('reply', 'Écrivez-nous sur WhatsApp.');
-        $this->assertTrue(AiMessage::query()->where('role', 'assistant')->firstOrFail()->meta['fallback']);
+        $this->ask('Quels sont vos délais de livraison ?')->assertOk()->assertJsonPath('fallback', false)->assertSee('livraison');
 
         Setting::putMany(['ai_api_key' => '']);
         Http::fake();
-        $this->ask('Bonjour')->assertJsonPath('fallback', true);
+        $this->ask('Bonjour')->assertOk()->assertJsonPath('fallback', false);
         Http::assertNothingSent();
     }
 
@@ -188,7 +186,7 @@ class AssistantTest extends TestCase
 
         $this->ask('Un')->assertJsonPath('fallback', false);
         $this->ask('Deux')->assertJsonPath('fallback', false);
-        $this->ask('Trois')->assertJsonPath('fallback', true);
+        $this->ask('Trois')->assertJsonPath('fallback', false);
         Http::assertSentCount(2);
     }
 
@@ -229,7 +227,7 @@ class AssistantTest extends TestCase
     public function test_api_key_is_stored_encrypted_never_displayed_and_kept_when_left_blank(): void
     {
         $admin = User::factory()->admin()->create();
-        $payload = fn (array $overrides = []) => ['settings' => $overrides + ['ai_provider' => 'anthropic', 'ai_name' => 'Léa', 'ai_temperature' => 0.4, 'ai_max_tokens' => 500, 'ai_products_in_context' => 8,
+        $payload = fn (array $overrides = []) => ['settings' => $overrides + ['ai_mode' => 'llm', 'ai_provider' => 'anthropic', 'ai_name' => 'Léa', 'ai_temperature' => 0.4, 'ai_max_tokens' => 500, 'ai_products_in_context' => 8,
             'ai_rate_limit' => 10, 'ai_daily_limit' => 500, 'ai_history_length' => 12, 'ai_retention_days' => 90]];
 
         $this->actingAs($admin)->put(route('admin.settings.update', 'assistant'), $payload(['ai_api_key' => 'sk-brand-new-key']))->assertSessionHasNoErrors();
@@ -266,7 +264,7 @@ class AssistantTest extends TestCase
         $this->assertSame(0, AiConversation::query()->count());
 
         Setting::putMany(['ai_api_key' => '']);
-        $this->postJson(route('admin.assistant.test'), ['message' => 'Test'])->assertStatus(422);
+        $this->postJson(route('admin.assistant.test'), ['message' => 'livraison'])->assertOk()->assertJsonPath('mode', 'bot');
     }
 
     public function test_old_conversations_are_purged(): void

@@ -26,6 +26,7 @@
         </p>
         <div class="form-grid">
             @foreach ($fields as $key => $field)
+                @isset($field['show_when'])<div data-show-when="{{ array_key_first($field['show_when']) }}={{ reset($field['show_when']) }}" style="display: contents">@endisset
                 @include('admin.settings.field', [
                     'name' => "settings[{$key}]",
                     'fileName' => "files[{$key}]",
@@ -34,6 +35,7 @@
                     'value' => old("settings.{$key}", $values[$key]),
                     'wide' => in_array($field['type'], ['list', 'textarea', 'markdown', 'checkboxes'], true),
                 ])
+                @isset($field['show_when'])</div>@endisset
             @endforeach
         </div>
     </section>

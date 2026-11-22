@@ -12,6 +12,7 @@ use App\Support\Catalog;
 use App\Support\Money;
 use App\Support\Phone;
 use App\Support\ShopSettings;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
@@ -96,7 +97,7 @@ class KnowledgeBase
             .'- Devise : '.Money::format(1500).' est un exemple de montant';
     }
 
-    private static function deliveryAndPayments(ShopSettings $shop): string
+    public static function deliveryAndPayments(ShopSettings $shop): string
     {
         $lines = ['## Livraison et paiement'];
         $fee = (float) Setting::get('shipping_fee');
@@ -199,6 +200,32 @@ class KnowledgeBase
      */
     private static function orders(array $userMessages, ?User $user): string
     {
+        ['orders' => $orders, 'gave_number' => $gaveNumber] = self::verifiedOrders($userMessages, $user);
+        $note = '';
+
+        if ($user === null && $orders->isEmpty() && $gaveNumber) {
+            $note = "Le client a donné un numéro de commande mais aucune commande ne correspond avec le téléphone fourni : explique poliment que tu ne peux pas la retrouver et demande de vérifier le numéro et le téléphone d’achat.\n";
+        }
+
+        if ($orders->isEmpty()) {
+            return $note;
+        }
+
+        return $note."Commandes vérifiées du client :\n".$orders->map(fn (Order $order): string => self::orderLine($order))->implode("\n");
+    }
+
+    public static function orderLine(Order $order): string
+    {
+        return "- {$order->number} du ".$order->placed_at->translatedFormat('j F Y').' : statut « '.$order->status->label().' », paiement « '.$order->payment_status->label().' » ('.$order->payment_method->label().'), total '.Money::format($order->total)
+            .($order->shipping_city ? ", livraison à {$order->shipping_city}" : '');
+    }
+
+    /**
+     * @param  list<string>  $userMessages
+     * @return array{orders: Collection<int, Order>, gave_number: bool}
+     */
+    public static function verifiedOrders(array $userMessages, ?User $user): array
+    {
         $orders = collect();
 
         if ($user) {
@@ -219,19 +246,7 @@ class KnowledgeBase
             }
         }
 
-        $orders = $orders->unique('id');
-        $note = '';
-
-        if ($user === null && $orders->isEmpty() && $numbers[0] !== []) {
-            $note = "Le client a donné un numéro de commande mais aucune commande ne correspond avec le téléphone fourni : explique poliment que tu ne peux pas la retrouver et demande de vérifier le numéro et le téléphone d’achat.\n";
-        }
-
-        if ($orders->isEmpty()) {
-            return $note;
-        }
-
-        return $note."Commandes vérifiées du client :\n".$orders->map(fn (Order $order): string => "- {$order->number} du ".$order->placed_at->translatedFormat('j F Y').' : statut « '.$order->status->label().' », paiement « '.$order->payment_status->label().' » ('.$order->payment_method->label().'), total '.Money::format($order->total)
-            .($order->shipping_city ? ", livraison à {$order->shipping_city}" : ''))->implode("\n");
+        return ['orders' => $orders->unique('id')->values(), 'gave_number' => $numbers[0] !== []];
     }
 
     /** @var list<string> */
