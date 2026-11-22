@@ -69,8 +69,8 @@ class AdminSearchAndFiltersTest extends TestCase
     public function test_products_can_be_filtered_by_brand_promotion_and_sorted(): void
     {
         $brand = Brand::factory()->create();
-        $cheap = Product::factory()->create(['name' => 'Zeta cheap', 'brand_id' => $brand->id, 'price' => 1]);
-        $promo = Product::factory()->discounted()->create(['name' => 'Alpha promo', 'brand_id' => null, 'price' => 9]);
+        $cheap = Product::factory()->create(['name' => 'Zeta cheap', 'brand_id' => $brand->id, 'price' => 1, 'old_price' => null]);
+        $promo = Product::factory()->create(['name' => 'Alpha promo', 'brand_id' => null, 'price' => 9, 'old_price' => 12]);
 
         $this->get(route('admin.products.index', ['brand' => $brand->id]))->assertOk()->assertSee('Zeta cheap')->assertDontSee('Alpha promo');
         $this->get(route('admin.products.index', ['brand' => 'none']))->assertOk()->assertSee('Alpha promo')->assertDontSee('Zeta cheap');
@@ -85,7 +85,7 @@ class AdminSearchAndFiltersTest extends TestCase
         OrderPlacement::place(['name' => 'Fidèle Aya', 'phone' => '0700000031'], [$product->id => 1]);
         OrderPlacement::place(['name' => 'Fidèle Aya', 'phone' => '0700000031'], [$product->id => 1]);
         OrderPlacement::place(['name' => 'Unique Bob', 'phone' => '0700000032'], [$product->id => 1]);
-        Customer::query()->where('phone', '0700000032')->update(['user_id' => User::factory()->create()->id]);
+        Customer::query()->where('phone', '+2250700000032')->update(['user_id' => User::factory()->create()->id]);
 
         $this->get(route('admin.customers.index', ['segment' => 'repeat']))->assertOk()->assertSee('Fidèle Aya')->assertDontSee('Unique Bob');
         $this->get(route('admin.customers.index', ['segment' => 'account']))->assertOk()->assertSee('Unique Bob')->assertDontSee('Fidèle Aya');

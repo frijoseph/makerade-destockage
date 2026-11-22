@@ -7,6 +7,7 @@ use App\Support\SettingsSchema;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -40,6 +41,10 @@ class Setting extends Model
     public static function putMany(array $values): void
     {
         foreach ($values as $key => $value) {
+            if ($value !== null && $value !== '' && (SettingsSchema::field($key)['type'] ?? null) === 'secret') {
+                $value = Crypt::encryptString((string) $value);
+            }
+
             static::query()->updateOrCreate(
                 ['key' => $key],
                 ['value' => is_array($value) ? json_encode(array_values($value), JSON_UNESCAPED_UNICODE) : (is_bool($value) ? (int) $value : $value)],
@@ -89,6 +94,11 @@ class Setting extends Model
     {
         $url = trim((string) $url);
 
+        // Links come from the admin: never let a script scheme through, even by mistake.
+        if (preg_match('/^(javascript|data|vbscript|file):/i', preg_replace('/[\x00-\x20]+/', '', $url) ?? '')) {
+            return '#';
+        }
+
         return $url === '' || Str::startsWith($url, ['http://', 'https://', 'mailto:', 'tel:', '#']) ? ($url ?: '#') : url($url);
     }
 
@@ -110,11 +120,25 @@ class Setting extends Model
         }
     }
 
+    private static function decrypt(string $value): string
+    {
+        if ($value === '') {
+            return '';
+        }
+
+        try {
+            return Crypt::decryptString($value);
+        } catch (Throwable) {
+            return '';
+        }
+    }
+
     private static function cast(string $value, string $type): mixed
     {
         return match ($type) {
             'list', 'checkboxes' => json_decode($value, true) ?: [],
             'boolean' => (bool) (int) $value,
+            'secret' => static::decrypt($value),
             'number' => str_contains($value, '.') ? (float) $value : (int) $value,
             default => $value,
         };

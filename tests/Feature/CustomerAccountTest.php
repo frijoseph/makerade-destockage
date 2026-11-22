@@ -36,12 +36,10 @@ class CustomerAccountTest extends TestCase
         $this->get('/account/forgot-password')->assertOk();
     }
 
-    public function test_registration_creates_the_account_links_old_orders_and_offers_the_welcome_code(): void
+    public function test_registration_creates_the_account_and_offers_the_welcome_code(): void
     {
         Coupon::factory()->create(['code' => 'BIENVENUE10']);
         Setting::putMany(['welcome_coupon_code' => 'BIENVENUE10']);
-        $product = Product::factory()->create();
-        OrderPlacement::place(['name' => 'Aya', 'phone' => '+2250711223344'], [$product->id => 1]);
 
         $this->post(route('account.register'), $this->registration())
             ->assertRedirect(route('account'))
@@ -50,9 +48,89 @@ class CustomerAccountTest extends TestCase
         $user = User::query()->where('email', 'aya@example.com')->firstOrFail();
         $this->assertAuthenticatedAs($user);
         $this->assertSame(UserRole::Customer, $user->role);
-        $this->assertSame(1, Customer::query()->where('user_id', $user->id)->count());
+        $this->assertSame(1, Customer::query()->where('user_id', $user->id)->count(), 'a brand-new phone number is linked right away');
 
-        $this->get('/account')->assertOk()->assertSee('Bonjour, Aya')->assertSee('MK-'.now()->format('Y'));
+        $this->get('/account')->assertOk()->assertSee('Bonjour, Aya');
+    }
+
+    public function test_past_orders_are_not_attached_by_a_bare_phone_number_but_can_be_claimed_with_proof(): void
+    {
+        $product = Product::factory()->create(['price' => 2500, 'stock' => 10]);
+        $order = OrderPlacement::place(['name' => 'Aya', 'phone' => '+2250711223344'], [$product->id => 1]);
+
+        $this->post(route('account.register'), $this->registration())->assertRedirect(route('account'));
+        $user = User::query()->where('email', 'aya@example.com')->firstOrFail();
+
+        // anyone can type a phone number: the history stays hidden until the order number AND the amount are given
+        $this->assertNull($order->customer->fresh()->user_id);
+        $this->get('/account')->assertOk()->assertDontSee('<b>'.$order->number.'</b>', false);
+
+        $this->post(route('account.claim'), ['number' => $order->number, 'total' => '999'])->assertSessionHasErrors('number', errorBag: 'claim');
+        $this->assertNull($order->fresh()->user_id);
+
+        $this->post(route('account.claim'), ['number' => strtolower($order->number), 'total' => number_format((float) $order->total, 2, ',', ' ')])->assertSessionHasNoErrors();
+        $this->assertSame($user->id, $order->fresh()->user_id);
+        $this->assertSame($user->id, $order->customer->fresh()->user_id);
+        $this->get('/account')->assertOk()->assertSee('<b>'.$order->number.'</b>', false);
+    }
+
+    public function test_claiming_is_limited_and_only_works_for_orders_placed_with_the_account_phone(): void
+    {
+        $product = Product::factory()->create(['price' => 1000, 'stock' => 50]);
+        $theirs = OrderPlacement::place(['name' => 'Bob', 'phone' => '+2250799999999'], [$product->id => 1]);
+        $user = User::factory()->create(['phone' => '+2250711223344']);
+        $this->actingAs($user);
+
+        $this->post(route('account.claim'), ['number' => $theirs->number, 'total' => (string) $theirs->total])->assertSessionHasErrors('number', errorBag: 'claim');
+        $this->assertNull($theirs->fresh()->user_id);
+
+        foreach (range(1, 5) as $i) {
+            $this->post(route('account.claim'), ['number' => 'MK-2099-0000'.$i, 'total' => '1']);
+        }
+        $this->post(route('account.claim'), ['number' => $theirs->number, 'total' => (string) $theirs->total])->assertSessionHasErrors('number', errorBag: 'claim');
+        $this->assertStringContainsString('Trop de tentatives', session('errors')->getBag('claim')->first('number'));
+    }
+
+    public function test_changing_the_profile_phone_never_hands_over_someone_elses_history(): void
+    {
+        $product = Product::factory()->create(['stock' => 10]);
+        $victimOrder = OrderPlacement::place(['name' => 'Victime', 'phone' => '+2250755555555', 'address' => 'Rue secrète'], [$product->id => 1]);
+        $attacker = User::factory()->create(['phone' => '+2250700000001']);
+
+        $this->actingAs($attacker)->put(route('account.profile'), ['name' => 'Pirate', 'phone' => '0755555555', 'email' => $attacker->email])->assertSessionHasNoErrors();
+
+        $this->assertNull($victimOrder->customer->fresh()->user_id);
+        $this->assertSame('Victime', $victimOrder->customer->fresh()->name);
+        $this->get('/account')->assertOk()->assertDontSee('<b>'.$victimOrder->number.'</b>', false)->assertDontSee('Rue secrète');
+    }
+
+    public function test_ordering_for_another_phone_while_logged_in_does_not_link_that_customer(): void
+    {
+        $product = Product::factory()->create(['slug' => 'savon-x', 'price' => 10, 'stock' => 10]);
+        $victimOrder = OrderPlacement::place(['name' => 'Victime', 'phone' => '+2250755555555'], [$product->id => 1]);
+        $attacker = User::factory()->create(['phone' => '+2250700000001']);
+
+        $this->actingAs($attacker)->postJson(route('checkout.store'), [
+            'name' => 'Pirate', 'phone' => '0755555555', 'city' => 'Abidjan', 'address' => 'Ailleurs', 'payment_method' => 'wave', 'items' => ['savon-x' => 1],
+        ])->assertCreated();
+
+        $this->assertNull($victimOrder->customer->fresh()->user_id, 'the victim customer is not attached to the attacker');
+        $page = $this->get('/account')->assertOk();
+        $this->assertStringNotContainsString('<b>'.$victimOrder->number.'</b>', $page->getContent(), 'the victim order is not listed');
+        $this->assertSame(1, $attacker->orders()->count(), 'only the order the attacker placed is in the account');
+    }
+
+    public function test_repeated_wrong_passwords_lock_the_account_for_a_while(): void
+    {
+        $user = User::factory()->create(['password' => 'secret-pass']);
+
+        foreach (range(1, 8) as $i) {
+            $this->withServerVariables(['REMOTE_ADDR' => "10.1.0.{$i}"])->post(route('account.login'), ['login' => $user->email, 'password' => 'faux'.$i]);
+        }
+
+        $this->withServerVariables(['REMOTE_ADDR' => '10.1.9.9'])->post(route('account.login'), ['login' => $user->email, 'password' => 'secret-pass'])->assertSessionHasErrorsIn('login', 'login');
+        $this->assertGuest();
+        $this->assertStringContainsString('Trop de tentatives', session('errors')->getBag('login')->first('login'));
     }
 
     public function test_registration_is_validated(): void
@@ -70,7 +148,7 @@ class CustomerAccountTest extends TestCase
     {
         $user = User::factory()->create(['password' => 'secret-pass']);
 
-        $this->from('/account')->post(route('account.login'), ['email' => $user->email, 'password' => 'faux'])->assertSessionHasErrorsIn('login', 'email');
+        $this->from('/account')->post(route('account.login'), ['email' => $user->email, 'password' => 'faux'])->assertSessionHasErrorsIn('login', 'login');
         $this->assertGuest();
 
         $this->post(route('account.login'), ['email' => $user->email, 'password' => 'secret-pass'])->assertRedirect(route('account'));
@@ -84,7 +162,7 @@ class CustomerAccountTest extends TestCase
     {
         $user = User::factory()->create(['password' => 'secret-pass', 'is_active' => false]);
 
-        $this->post(route('account.login'), ['email' => $user->email, 'password' => 'secret-pass'])->assertSessionHasErrorsIn('login', 'email');
+        $this->post(route('account.login'), ['email' => $user->email, 'password' => 'secret-pass'])->assertSessionHasErrorsIn('login', 'login');
         $this->assertGuest();
     }
 
@@ -154,7 +232,7 @@ class CustomerAccountTest extends TestCase
             'name' => 'Aya', 'phone' => '0700000077', 'city' => 'Abidjan', 'address' => 'Cocody', 'payment_method' => 'wave', 'items' => ['savon-test' => 1],
         ])->assertCreated();
 
-        $this->assertSame($user->id, Customer::query()->where('phone', '0700000077')->value('user_id'));
+        $this->assertSame($user->id, Customer::query()->where('phone', '+2250700000077')->value('user_id'));
         $this->get('/account')->assertOk()->assertSee('MK-'.now()->format('Y'));
     }
 }

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -27,9 +29,20 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
+        // Slows down password guessing on one account even when the attacker rotates IP addresses.
+        $lockKey = 'admin-login:'.Str::lower($credentials['email']);
+
+        if (RateLimiter::tooManyAttempts($lockKey, 8)) {
+            throw ValidationException::withMessages(['email' => 'Trop de tentatives. Réessayez dans '.ceil(RateLimiter::availableIn($lockKey) / 60).' minute(s).']);
+        }
+
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+            RateLimiter::hit($lockKey, 900);
+
             throw ValidationException::withMessages(['email' => 'Identifiants incorrects.']);
         }
+
+        RateLimiter::clear($lockKey);
 
         $user = $request->user();
 

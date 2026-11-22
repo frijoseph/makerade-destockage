@@ -38,7 +38,7 @@
                 @forelse ($movements as $movement)
                     <tr>
                         <td>{{ $movement->created_at->translatedFormat('j M Y') }}<small>{{ $movement->created_at->format('H:i') }}</small></td>
-                        <td>@if ($movement->product)<a href="{{ route('admin.products.edit', $movement->product) }}" class="strong">{{ $movement->product->name }}</a><small>{{ $movement->product->variant }}</small>@else — @endif</td>
+                        <td>@if ($movement->product)<a href="{{ route('admin.products.edit', $movement->product) }}" class="strong">{{ $movement->product->name }}</a><small>{{ $movement->product->variant }}@if ($movement->variant) · {{ $movement->variant->name }}@endif</small>@else — @endif</td>
                         <td><x-admin.badge :tone="$movement->type->tone()">{{ $movement->type->label() }}</x-admin.badge></td>
                         <td class="num"><span class="{{ $movement->quantity >= 0 ? 'qty-pos' : 'qty-neg' }}">{{ $movement->quantity > 0 ? '+' : '' }}{{ $movement->quantity }}</span></td>
                         <td class="num">{{ $movement->stock_after }}</td>
@@ -65,7 +65,15 @@
                     <select name="product_id" required>
                         <option value="">Choisir…</option>
                         @foreach ($products as $product)
-                            <option value="{{ $product->id }}" @selected((int) old('product_id', $selectedProduct) === $product->id)>{{ $product->name }} — {{ $product->variant }} ({{ $product->stock }})</option>
+                            @if ($product->variants->isNotEmpty())
+                                <optgroup label="{{ $product->name }} — {{ $product->variant }}">
+                                    @foreach ($product->variants as $variant)
+                                        <option value="{{ $product->id }}:{{ $variant->id }}" @selected(old('product_id') === $product->id.':'.$variant->id)>{{ $variant->name }} ({{ $variant->stock }})</option>
+                                    @endforeach
+                                </optgroup>
+                            @else
+                                <option value="{{ $product->id }}" @selected((string) old('product_id', $selectedProduct) === (string) $product->id)>{{ $product->name }} — {{ $product->variant }} ({{ $product->stock }})</option>
+                            @endif
                         @endforeach
                     </select>
                 </label>

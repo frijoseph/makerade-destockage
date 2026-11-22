@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['name', 'email', 'subject', 'message', 'read_at'])]
+#[Fillable(['name', 'phone', 'email', 'subject', 'message', 'read_at'])]
 class ContactMessage extends Model
 {
     /**

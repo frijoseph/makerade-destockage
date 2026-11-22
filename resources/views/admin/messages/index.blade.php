@@ -18,7 +18,7 @@
             @forelse ($messages as $message)
                 <tr data-href="{{ route('admin.messages.show', $message) }}">
                     <td class="nowrap">{{ $message->created_at->translatedFormat('j M Y H:i') }}</td>
-                    <td><a href="{{ route('admin.messages.show', $message) }}" @class(['strong' => ! $message->read_at])>{{ $message->name }}</a><small>{{ $message->email }}</small></td>
+                    <td><a href="{{ route('admin.messages.show', $message) }}" @class(['strong' => ! $message->read_at])>{{ $message->name }}</a><small>{{ $message->phone ? $shop->phone($message->phone) : $message->email }}</small></td>
                     <td>{{ $message->subject ?: \Illuminate\Support\Str::limit($message->message, 60) }}</td>
                     <td>@if ($message->read_at)<x-admin.badge tone="slate">Lu</x-admin.badge>@else<x-admin.badge tone="violet">Nouveau</x-admin.badge>@endif</td>
                 </tr>

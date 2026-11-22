@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\NormalizesPhone;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class ProfileRequest extends FormRequest
 {
+    use NormalizesPhone;
+
     /**
      * The route middleware guarantees a signed-in user.
      */
@@ -18,7 +21,9 @@ class ProfileRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge(['email' => mb_strtolower(trim((string) $this->input('email')))]);
+        $email = mb_strtolower(trim((string) $this->input('email')));
+        $this->merge(['email' => $email === '' ? null : $email]);
+        $this->normalizePhoneInput();
     }
 
     /**
@@ -28,8 +33,8 @@ class ProfileRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->user())],
-            'phone' => ['required', 'string', 'regex:/^\+?[\d\s().-]{8,20}$/'],
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->user())],
+            'phone' => ['required', 'string', 'regex:/^\+\d{8,15}$/', Rule::unique('users', 'phone')->ignore($this->user())],
             'city' => ['nullable', 'string', 'max:80'],
             'address' => ['nullable', 'string', 'max:255'],
         ];

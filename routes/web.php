@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin;
+use App\Http\Controllers\AssistantController;
 use App\Http\Controllers\Auth;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContactController;
@@ -39,6 +40,7 @@ Route::prefix('account')->group(function () {
         Route::post('/logout', [Auth\CustomerAuthController::class, 'logout'])->name('account.logout');
         Route::put('/profile', [AccountController::class, 'profile'])->name('account.profile');
         Route::put('/password', [AccountController::class, 'password'])->name('account.password');
+        Route::post('/claim-order', [AccountController::class, 'claim'])->name('account.claim');
     });
 });
 
@@ -48,8 +50,10 @@ Route::post('/wheel/spin', [PromoController::class, 'spin'])->middleware('thrott
 Route::get('/track-order', [ShopController::class, 'track'])->name('track');
 Route::get('/page/{slug}', [ShopController::class, 'info'])->name('info');
 
+Route::post('/assistant/message', [AssistantController::class, 'message'])->middleware('throttle:assistant')->name('assistant.message');
 Route::post('/checkout', [CheckoutController::class, 'store'])->middleware('throttle:10,1')->name('checkout.store');
 Route::get('/commande/{order:number}', [CheckoutController::class, 'show'])->middleware('signed')->name('checkout.show');
+Route::get('/commande/{order:number}/recu', [CheckoutController::class, 'receipt'])->middleware('signed')->name('checkout.receipt');
 
 /*
 |--------------------------------------------------------------------------
@@ -70,9 +74,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/orders/create', [Admin\OrderController::class, 'create'])->name('orders.create');
         Route::post('/orders', [Admin\OrderController::class, 'store'])->name('orders.store');
         Route::get('/orders/{order}', [Admin\OrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders/{order}/preview', [Admin\OrderController::class, 'preview'])->name('orders.preview');
+        Route::get('/orders/{order}/print/{document}', [Admin\OrderController::class, 'print'])->whereIn('document', ['delivery', 'receipt', 'ticket'])->name('orders.print');
         Route::patch('/orders/{order}/status', [Admin\OrderController::class, 'updateStatus'])->name('orders.status');
         Route::patch('/orders/{order}/payment', [Admin\OrderController::class, 'updatePayment'])->name('orders.payment');
 
+        Route::get('/products/export', [Admin\ProductImportController::class, 'export'])->name('products.export');
+        Route::get('/products/template', [Admin\ProductImportController::class, 'template'])->name('products.template');
+        Route::get('/products/import', [Admin\ProductImportController::class, 'create'])->name('products.import');
+        Route::post('/products/import', [Admin\ProductImportController::class, 'preview'])->middleware('throttle:20,1')->name('products.import.preview');
+        Route::post('/products/import/apply', [Admin\ProductImportController::class, 'store'])->middleware('throttle:10,1')->name('products.import.store');
         Route::resource('products', Admin\ProductController::class)->except('show');
         Route::resource('categories', Admin\CategoryController::class)->except('show');
         Route::resource('brands', Admin\BrandController::class)->except('show');
@@ -89,6 +100,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/coupons', [Admin\CouponController::class, 'store'])->name('coupons.store');
         Route::put('/coupons/{coupon}', [Admin\CouponController::class, 'update'])->name('coupons.update');
         Route::delete('/coupons/{coupon}', [Admin\CouponController::class, 'destroy'])->name('coupons.destroy');
+
+        Route::get('/assistant', [Admin\AssistantController::class, 'index'])->name('assistant.index');
+        Route::post('/assistant/test', [Admin\AssistantController::class, 'test'])->middleware('throttle:20,1')->name('assistant.test');
+        Route::post('/assistant/purge', [Admin\AssistantController::class, 'purge'])->name('assistant.purge');
+        Route::get('/assistant/{conversation}', [Admin\AssistantController::class, 'show'])->name('assistant.show');
+        Route::delete('/assistant/{conversation}', [Admin\AssistantController::class, 'destroy'])->name('assistant.destroy');
 
         Route::get('/messages', [Admin\MessageController::class, 'index'])->name('messages.index');
         Route::get('/messages/{message}', [Admin\MessageController::class, 'show'])->name('messages.show');

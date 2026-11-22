@@ -68,6 +68,10 @@
             @case('datetime')
                 <input type="datetime-local" id="{{ $id }}" name="{{ $name }}" value="{{ $value ? \Illuminate\Support\Carbon::parse($value)->format('Y-m-d\TH:i') : '' }}">
                 @break
+            @case('secret')
+                <input type="password" id="{{ $id }}" name="{{ $name }}" value="" autocomplete="new-password" placeholder="{{ $value ? '•••••••••••• enregistrée — laissez vide pour la conserver' : 'Collez votre clé ici' }}" spellcheck="false">
+                @if ($value)<span class="check"><input type="checkbox" name="clear_secrets[{{ preg_replace('/^settings\[(.+)\]$/', '$1', $name) }}]" value="1" id="{{ $id }}c"><label for="{{ $id }}c">Supprimer la clé enregistrée</label></span>@endif
+                @break
             @case('number')
                 <input type="number" id="{{ $id }}" name="{{ $name }}" value="{{ $value }}" step="any" @if ($hasError) aria-invalid="true" @endif>
                 @break

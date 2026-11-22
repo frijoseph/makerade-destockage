@@ -41,7 +41,7 @@ class PopupRequest extends FormRequest
             'remove_image' => ['nullable', 'boolean'],
             'coupon_code' => ['nullable', 'string', 'max:40', Rule::exists('coupons', 'code')],
             'button_label' => ['nullable', 'string', 'max:60'],
-            'button_url' => ['nullable', 'string', 'max:255'],
+            'button_url' => ['nullable', 'string', 'max:255', 'regex:/^(\/|https?:\/\/|#|tel:|mailto:)/'],
             'trigger' => ['required', Rule::in(array_keys(Popup::TRIGGERS))],
             'trigger_value' => ['required', 'integer', 'min:0', 'max:3600'],
             'frequency' => ['required', Rule::in(array_keys(Popup::FREQUENCIES))],

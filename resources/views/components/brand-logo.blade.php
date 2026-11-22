@@ -5,7 +5,7 @@
     $style = $b['style'] ?? 'plain';
     $size = max(13, min(28, (int) floor(190 / max(mb_strlen($name), 1))));
 @endphp
-<a href="{{ route('shop', ['q' => $name]) }}" class="brand" aria-label="{{ $name }}">
+<a href="{{ $b['url'] ?? route('shop', ['q' => $name]) }}" class="brand" aria-label="{{ $name }}">
 @if (! empty($b['logo']))
     <img src="{{ $b['logo'] }}" alt="{{ $name }}" loading="lazy" style="max-height:52px;max-width:130px;object-fit:contain">
 @else

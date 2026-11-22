@@ -48,6 +48,7 @@
     const add = e.target.closest('[data-add]');
     if (add) {
       const id = add.dataset.add;
+      if (CATALOG[id]?.variants?.length) { location.href = B + '/product/' + id; return; }
       let qty = add.dataset.qtyFrom ? +$(add.dataset.qtyFrom).value || 1 : 1;
       const have = store.cart[id] || 0, stock = CATALOG[id]?.stock;
       if (stock != null && have + qty > stock) {
@@ -150,7 +151,7 @@
   const si = $('#searchInput'), sg = $('#suggest');
   si?.addEventListener('input', () => {
     const q = si.value.trim().toLowerCase(); if (q.length < 2) { sg.hidden = true; return; }
-    const res = Object.values(CATALOG).filter(p => (p.name + ' ' + p.brand + ' ' + p.variant).toLowerCase().includes(q)).slice(0, 5);
+    const res = Object.values(CATALOG).filter(p => !p.virtual && (p.name + ' ' + p.brand + ' ' + p.variant).toLowerCase().includes(q)).slice(0, 5);
     sg.innerHTML = res.length ? res.map(p => `<a href="${B}/product/${p.slug}/">${p.image ? `<img class="art photo" src="${p.image}" alt="">` : `<svg class="art" style="width:34px;height:40px" viewBox="0 0 120 140"><rect x="30" y="20" width="60" height="100" rx="12" fill="${p.c1}"/></svg>`}<span><b>${esc(p.name)}</b><small>${esc(p.variant)} · ${money(p.price)}</small></span></a>`).join('') : '<div class="none">Aucun produit trouvé</div>';
     sg.hidden = false;
   });
@@ -264,7 +265,7 @@
       list.innerHTML = `<div class="empty"><svg class="ic" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 10.5h10.5L20.500 7H6.200"/><circle cx="9" cy="19" r="1.500"/><circle cx="17" cy="19" r="1.500"/></svg><h3>Votre panier est vide</h3><p>Vous n'avez encore rien ajouté.</p><a class="btn btn-primary" href="${B}/shop/">Commencer mes achats</a></div>`;
     } else {
       list.innerHTML = ids.map(id => {
-        const p = CATALOG[id], q = store.cart[id], art = $(`[data-art="${id}"]`)?.innerHTML || '';
+        const p = CATALOG[id], q = store.cart[id], art = $(`[data-art="${p.base || id}"]`)?.innerHTML || '';
         return `<div class="citem" data-id="${esc(id)}">${art}<div><h4>${esc(p.name)}</h4><p>${esc(p.variant)}</p><b>${money(p.price)}</b></div>
           <div class="citem-r"><div class="qty"><button data-c="-1" aria-label="Moins">−</button><input value="${q}" readonly><button data-c="1" aria-label="Plus">+</button></div>
           <button class="rm" data-rm="${esc(id)}">Retirer</button></div></div>`;

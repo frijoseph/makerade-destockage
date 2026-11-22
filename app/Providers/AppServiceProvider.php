@@ -10,9 +10,12 @@ use App\Models\User;
 use App\OrderStatus;
 use App\Support\ShopSettings;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -34,6 +37,8 @@ class AppServiceProvider extends ServiceProvider
         Carbon::setLocale(config('app.locale'));
         Paginator::defaultView('admin.partials.pagination');
         View::share('shop', new ShopSettings);
+
+        RateLimiter::for('assistant', fn (Request $request): Limit => Limit::perMinute(max(1, (int) Setting::get('ai_rate_limit', 10)))->by($request->ip()));
 
         ResetPassword::createUrlUsing(fn (User $user, string $token): string => route('password.reset', [
             'token' => $token,

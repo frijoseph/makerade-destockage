@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'number', 'customer_id', 'status', 'payment_status', 'payment_method', 'channel',
+    'number', 'customer_id', 'user_id', 'status', 'payment_status', 'payment_method', 'channel',
     'subtotal', 'shipping_fee', 'discount', 'coupon_id', 'coupon_code', 'total',
     'shipping_name', 'shipping_phone', 'shipping_city', 'shipping_address', 'notes',
     'placed_at', 'paid_at', 'delivered_at',
@@ -43,6 +43,16 @@ class Order extends Model
             'paid_at' => 'datetime',
             'delivered_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Storefront account the order belongs to (set when the buyer was logged in, or after a claim).
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**

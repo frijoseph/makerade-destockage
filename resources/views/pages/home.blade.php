@@ -168,10 +168,11 @@
 {{-- ===== MARQUES ===== --}}
 @if (count($brands))
 <section class="container fsec">
-    <div class="fsec-h reveal"><h2>{{ $shop->text('brands_title') }}</h2></div>
-    <div class="marquee" aria-label="Marques">
-        <div class="marquee-in">
-            @foreach ([1, 2] as $copy)
+    @php $brandSpeed = (int) $shop->brands_speed; @endphp
+    <div class="fsec-h reveal"><h2>{{ $shop->text('brands_title') }}</h2>@if ($shop->brands_link_all)<a href="{{ route('brands') }}" class="ul-link">Voir toutes les marques <x-icon name="arrow-right" :size="15" :stroke="2" /></a>@endif</div>
+    <div class="marquee @if ($brandSpeed === 0) marquee-static @endif" aria-label="Marques">
+        <div class="marquee-in" @if ($brandSpeed > 0) style="animation-duration: {{ $brandSpeed }}s" @endif>
+            @foreach ($brandSpeed > 0 ? [1, 2] : [1] as $copy)
                 @foreach ($brands as $b)<div class="mq-item"><x-brand-logo :b="$b" /></div>@endforeach
             @endforeach
         </div>

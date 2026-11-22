@@ -7,6 +7,9 @@
 @section('subheading')Passée le {{ $order->placed_at->translatedFormat('l j F Y à H:i') }} · {{ $order->channel->label() }}@endsection
 @section('actions')
     <a href="{{ route('admin.orders.index') }}" class="btn"><x-admin.icon name="chev-left" :size="18" /> Commandes</a>
+    <a href="{{ route('admin.orders.print', [$order, 'delivery', 'auto' => 1]) }}" target="_blank" rel="noopener" class="btn"><x-admin.icon name="printer" :size="17" /> Bon de livraison</a>
+    <a href="{{ route('admin.orders.print', [$order, 'receipt', 'auto' => 1]) }}" target="_blank" rel="noopener" class="btn"><x-admin.icon name="printer" :size="17" /> Reçu</a>
+    <a href="{{ route('admin.orders.print', [$order, 'ticket', 'auto' => 1]) }}" target="_blank" rel="noopener" class="btn"><x-admin.icon name="printer" :size="17" /> Ticket</a>
 @endsection
 
 @section('content')
@@ -122,7 +125,7 @@
                 <span class="avatar">{{ $order->customer->initials() }}</span>
                 <div><h2>{{ $order->shipping_name ?? $order->customer->name }}</h2><small class="muted">{{ $order->customer->orders()->count() }} commande(s)</small></div>
             </div>
-            <p class="contact-line"><x-admin.icon name="phone" :size="16" /> <a href="tel:{{ $order->shipping_phone }}">{{ $order->shipping_phone }}</a></p>
+            <p class="contact-line"><x-admin.icon name="phone" :size="16" /> <a href="tel:{{ $order->shipping_phone }}">{{ $shop->phone($order->shipping_phone) }}</a></p>
             @php $whatsapp = preg_replace('/\D/', '', (string) $order->shipping_phone); @endphp
             @if ($whatsapp)
                 <p class="contact-line"><x-admin.icon name="whatsapp" :size="16" /> <a href="https://wa.me/{{ $whatsapp }}?text={{ rawurlencode('Bonjour, au sujet de votre commande '.$order->number.' chez '.$shop->shop_name.'…') }}" target="_blank" rel="noopener">Écrire sur WhatsApp</a></p>

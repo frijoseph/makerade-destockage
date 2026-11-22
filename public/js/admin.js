@@ -88,6 +88,18 @@
     location.href = row.dataset.href;
   });
 
+  /* ---------- aperçu d'une commande dans une modale ---------- */
+  document.addEventListener('click', async e => {
+    const btn = e.target.closest('[data-order-preview]');
+    if (!btn) return;
+    e.preventDefault(); e.stopPropagation();
+    try {
+      const res = await fetch(btn.dataset.orderPreview, { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'text/html' } });
+      if (!res.ok) throw new Error();
+      UI().view({ title: btn.dataset.title || 'Commande', html: await res.text() });
+    } catch (err) { UI().toast('Impossible de charger la commande.', 'error'); }
+  });
+
   /* ---------- confirmations (SweetAlert2) + verrouillage des doubles envois ---------- */
   document.addEventListener('submit', async e => {
     const f = e.target;

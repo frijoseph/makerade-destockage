@@ -93,3 +93,22 @@ body.mini-open{overflow:hidden}
 .fhero .fhero-img.alt>img:first-child{object-position:center}
 .fb-pink .fb-img{width:52%;height:100%;object-fit:cover;object-position:center}
 .fb-peach2 .fb-img,.fb-cream .fb-img{width:52%;object-position:center}
+
+/* ---------- fiche produit : miniatures et variantes ---------- */
+.pd-gal{align-content:center;gap:18px}
+.pd-thumbs{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;position:relative;z-index:2}
+.pd-thumbs button{width:64px;height:64px;padding:0;border-radius:12px;border:2px solid transparent;background:#fff;overflow:hidden;box-shadow:var(--sh-s);transition:transform .15s,border-color .15s}
+.pd-thumbs button:hover{transform:translateY(-2px)}
+.pd-thumbs button.on{border-color:var(--g)}
+.pd-thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.pd-variants{display:grid;gap:14px;margin:16px 0 6px}
+.pv-axis b{display:block;font-size:13.5px;margin-bottom:8px}
+.pv-axis b span{color:var(--g);font-weight:700}
+.pv-chips{display:flex;flex-wrap:wrap;gap:8px}
+.pv-chip{min-width:44px;padding:9px 16px;border:1.5px solid var(--line);border-radius:12px;background:#fff;font-weight:600;font-size:14px;transition:border-color .15s,background .15s,transform .15s}
+.pv-chip:hover{border-color:var(--g);transform:translateY(-1px)}
+.pv-chip.on{border-color:var(--g);background:var(--g-l);color:var(--g-d);box-shadow:0 0 0 3px color-mix(in srgb,var(--g) 18%,transparent)}
+.pv-chip.oos{opacity:.55;text-decoration:line-through}
+.pv-chip.na{opacity:.4;border-style:dashed}
+.price .from{font-size:12px;color:var(--mut);font-weight:600}
+.btn:disabled,.btn[disabled]{opacity:.5;cursor:not-allowed;filter:grayscale(.3);transform:none!important;box-shadow:none}

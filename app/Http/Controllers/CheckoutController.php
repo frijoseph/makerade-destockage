@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CheckoutRequest;
 use App\Models\Order;
-use App\Models\Product;
 use App\OrderChannel;
 use App\PaymentMethod;
+use App\Support\CartResolver;
 use App\Support\OrderPlacement;
 use DomainException;
 use Illuminate\Http\JsonResponse;
@@ -21,13 +21,11 @@ class CheckoutController extends Controller
     public function store(CheckoutRequest $request): JsonResponse
     {
         $data = $request->validated();
-        $ids = Product::query()->active()->whereIn('slug', array_keys($data['items']))->pluck('id', 'slug');
+        $lines = CartResolver::lines($data['items']);
 
-        if ($ids->count() !== count($data['items'])) {
+        if ($lines === null) {
             return response()->json(['message' => 'Un des produits du panier n’est plus disponible. Actualisez la page.'], 422);
         }
-
-        $lines = $ids->mapWithKeys(fn (int $id, string $slug): array => [$id => (int) $data['items'][$slug]])->all();
 
         try {
             $order = OrderPlacement::place(
@@ -55,6 +53,23 @@ class CheckoutController extends Controller
      */
     public function show(Order $order): View
     {
-        return view('pages.order-confirmation', ['order' => $order->load('items')]);
+        return view('pages.order-confirmation', [
+            'order' => $order->load('items'),
+            'receiptUrl' => URL::temporarySignedRoute('checkout.receipt', now()->addHour(), ['order' => $order->number]),
+        ]);
+    }
+
+    /**
+     * Printable receipt for the customer (same signed-link protection as the confirmation page).
+     */
+    public function receipt(Order $order): View
+    {
+        return view('documents.order', [
+            'order' => $order->load(['customer', 'items']),
+            'mode' => 'receipt',
+            'auto' => request()->boolean('auto'),
+            'back' => null,
+            'switch' => [],
+        ]);
     }
 }

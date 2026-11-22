@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\NormalizesPhone;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
 class RegisterRequest extends FormRequest
 {
+    use NormalizesPhone;
+
     /**
      * Anyone can create a customer account.
      */
@@ -18,7 +21,9 @@ class RegisterRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge(['email' => mb_strtolower(trim((string) $this->input('email')))]);
+        $email = mb_strtolower(trim((string) $this->input('email')));
+        $this->merge(['email' => $email === '' ? null : $email]);
+        $this->normalizePhoneInput();
     }
 
     /**
@@ -28,8 +33,8 @@ class RegisterRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['required', 'string', 'regex:/^\+?[\d\s().-]{8,20}$/'],
+            'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['required', 'string', 'regex:/^\+\d{8,15}$/', 'unique:users,phone'],
             'password' => ['required', 'confirmed', Password::min(8)],
             'terms' => ['accepted'],
         ];
@@ -51,6 +56,7 @@ class RegisterRequest extends FormRequest
         return [
             'email.unique' => 'Un compte existe déjà avec cet e-mail. Connectez-vous ou réinitialisez votre mot de passe.',
             'phone.regex' => 'Numéro de téléphone invalide.',
+            'phone.unique' => 'Un compte existe déjà avec ce numéro. Connectez-vous.',
             'terms.accepted' => 'Veuillez accepter les conditions générales.',
             'password.confirmed' => 'Les deux mots de passe ne correspondent pas.',
         ];

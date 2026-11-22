@@ -41,3 +41,10 @@
 .line-row .ts-wrapper { width: 100%; }
 .period .ts-wrapper { min-width: 180px; } .period .ts-control { border: 0; box-shadow: none; background: transparent; min-height: 44px; font-weight: 700; padding-left: 4px; }
 .sort .ts-wrapper { min-width: 190px; }
+
+/* champ téléphone : indicatif (recherchable) + numéro */
+.phone-field { display: grid; grid-template-columns: minmax(104px, 128px) minmax(0, 1fr); gap: 8px; align-items: stretch; }
+.phone-field .ts-wrapper { min-width: 0; }
+.phone-field .ts-control { padding-right: 30px; white-space: nowrap; }
+.phone-field > input { min-width: 0; }
+.ts-dropdown .option { white-space: normal; }

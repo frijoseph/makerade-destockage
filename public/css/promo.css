@@ -240,3 +240,13 @@ a.ann-item:hover span { text-decoration: underline; }
 .pay-opt input:focus-visible + span { outline: 3px solid rgba(35, 122, 50, .3); outline-offset: 2px; }
 .pay-methods .pm { display: inline-flex; align-items: center; gap: 8px; height: auto; padding: 4px 12px 4px 4px; background: #fff; border-radius: 10px; }
 .pay-methods .pm em { font-style: normal; font-size: 12px; font-weight: 700; color: #1f3b2a; }
+
+/* ---------- téléphone (popups, formulaires) et anti-spam ---------- */
+.hp { position: absolute !important; left: -9999px !important; width: 1px !important; height: 1px !important; opacity: 0 !important; pointer-events: none; }
+.hint { color: var(--mut); font-weight: 500; font-size: 12px; line-height: 1.4; }
+.cform .phone-field select, .cform .phone-field .ts-control { background: #fff; }
+.cform .phone-field input { padding: 12px 14px; }
+.mk-promo .phone-field { margin: 14px 1.5em 0; text-align: left; }
+.mk-promo .phone-field input { height: 48px; border: 1.5px solid var(--ln, #e6ebe7); border-radius: 12px; background: var(--bg, #fff); color: var(--fg, #14211a); padding: 0 14px; font: inherit; outline: 0; width: 100%; }
+.mk-promo .phone-field input:focus { border-color: var(--ac, #237a32); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ac, #237a32) 18%, transparent); }
+.news-form .phone-field { flex: 1; }

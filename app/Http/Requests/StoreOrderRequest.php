@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\NormalizesPhone;
 use App\OrderChannel;
 use App\PaymentMethod;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -10,6 +11,8 @@ use Illuminate\Validation\Rule;
 
 class StoreOrderRequest extends FormRequest
 {
+    use NormalizesPhone;
+
     /**
      * Access is already restricted by the admin middleware.
      */
@@ -23,6 +26,8 @@ class StoreOrderRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        $this->normalizePhoneInput('customer.phone', 'customer.phone_country');
+
         $this->merge([
             'items' => collect($this->input('items', []))
                 ->filter(fn ($item): bool => is_array($item) && ! empty($item['product_id']))
@@ -38,7 +43,7 @@ class StoreOrderRequest extends FormRequest
     {
         return [
             'customer.name' => ['required', 'string', 'max:255'],
-            'customer.phone' => ['required', 'string', 'max:30'],
+            'customer.phone' => ['required', 'string', 'regex:/^\+\d{8,15}$/'],
             'customer.email' => ['nullable', 'email', 'max:255'],
             'customer.city' => ['nullable', 'string', 'max:80'],
             'customer.address' => ['nullable', 'string', 'max:255'],
@@ -47,7 +52,7 @@ class StoreOrderRequest extends FormRequest
             'discount' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'distinct', Rule::exists('products', 'id')->where('is_active', true)],
+            'items.*.product_id' => ['required', 'distinct', 'regex:/^\d+(:\d+)?$/'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:999'],
         ];
     }

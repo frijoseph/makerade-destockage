@@ -21,7 +21,7 @@
                 <small>({{ $shop->number($p['reviews']) }})</small>
             </div>
         @endif
-        <div class="price"><b>{{ $shop->money($p['price']) }}</b>@if ($p['old_price'])<s>{{ $shop->money($p['old_price']) }}</s>@endif</div>
+        <div class="price">@if (! empty($p['price_from']))<small class="from">À partir de</small> <b>{{ $shop->money($p['price_from']) }}</b>@else<b>{{ $shop->money($p['price']) }}</b>@if ($p['old_price'])<s>{{ $shop->money($p['old_price']) }}</s>@endif @endif</div>
         @if ($flash && $stock !== null && $stock > 0 && $sold > 0)
             <div class="stock"><i style="--w: {{ (int) round($sold / ($sold + $stock) * 100) }}%"></i></div>
         @endif
@@ -30,7 +30,11 @@
         @elseif ($stock === 0)
             <small class="stock-t">Rupture de stock</small>
         @endif
-        <div class="stepper" data-stepper="{{ $p['slug'] }}"><button type="button" data-s="-1" aria-label="Moins">−</button><b>1</b><button type="button" data-s="1" aria-label="Plus">+</button></div>
-        <button class="btn-add" data-add="{{ $p['slug'] }}" @disabled($stock === 0)>{{ $stock === 0 ? 'Indisponible' : 'Ajouter au panier' }} <x-icon name="cart" :size="17" :stroke="1.8" /></button>
+        @if (! empty($p['variants']))
+            <a class="btn-add" href="{{ route('product', $p['slug']) }}">{{ $stock === 0 ? 'Indisponible' : 'Choisir une option' }} <x-icon name="chev-right" :size="17" :stroke="1.8" /></a>
+        @else
+            <div class="stepper" data-stepper="{{ $p['slug'] }}"><button type="button" data-s="-1" aria-label="Moins">−</button><b>1</b><button type="button" data-s="1" aria-label="Plus">+</button></div>
+            <button class="btn-add" data-add="{{ $p['slug'] }}" @disabled($stock === 0)>{{ $stock === 0 ? 'Indisponible' : 'Ajouter au panier' }} <x-icon name="cart" :size="17" :stroke="1.8" /></button>
+        @endif
     </div>
 </article>

@@ -42,12 +42,20 @@ class MessageController extends Controller
         ]);
     }
 
+    /**
+     * Neutralises spreadsheet formulas (=, @, tab, CR) in exported cells; phone numbers keep their leading +.
+     */
+    private static function csvSafe(?string $value): ?string
+    {
+        return $value !== null && preg_match('/^[=@\t\r]/', $value) ? "'".$value : $value;
+    }
+
     public function export(): StreamedResponse
     {
         return response()->streamDownload(function (): void {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['email', 'inscrit_le']);
-            NewsletterSubscriber::query()->orderBy('id')->each(fn (NewsletterSubscriber $subscriber) => fputcsv($out, [$subscriber->email, $subscriber->created_at->toDateTimeString()]));
+            fputcsv($out, ['telephone', 'email', 'inscrit_le']);
+            NewsletterSubscriber::query()->orderBy('id')->each(fn (NewsletterSubscriber $subscriber) => fputcsv($out, [self::csvSafe($subscriber->phone), self::csvSafe($subscriber->email), $subscriber->created_at->toDateTimeString()]));
             fclose($out);
         }, 'abonnes-newsletter-'.now()->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }

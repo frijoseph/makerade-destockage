@@ -30,7 +30,7 @@ class StockAdjustmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_id' => ['required', Rule::exists('products', 'id')],
+            'product_id' => ['required', 'regex:/^\d+(:\d+)?$/'],
             'type' => ['required', Rule::enum(StockMovementType::class)->only(self::MANUAL_TYPES)],
             'quantity' => ['required', 'integer', 'min:0', 'max:1000000'],
             'reason' => ['nullable', 'string', 'max:255'],

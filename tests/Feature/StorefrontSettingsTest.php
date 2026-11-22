@@ -92,13 +92,13 @@ class StorefrontSettingsTest extends TestCase
 
     public function test_contact_and_newsletter_forms_are_stored(): void
     {
-        $this->postJson(route('contact.store'), ['name' => 'Aya', 'email' => 'aya@example.com', 'message' => 'Bonjour'])->assertCreated();
+        $this->postJson(route('contact.store'), ['name' => 'Aya', 'phone' => '07 11 22 33 44', 'message' => 'Bonjour'])->assertCreated();
         $this->postJson(route('newsletter.store'), ['email' => 'Aya@Example.com'])->assertCreated();
         $this->postJson(route('newsletter.store'), ['email' => 'aya@example.com'])->assertCreated();
 
         $this->assertSame(1, ContactMessage::query()->count());
         $this->assertSame(1, NewsletterSubscriber::query()->count());
-        $this->postJson(route('contact.store'), ['email' => 'pas-un-email'])->assertJsonValidationErrors(['name', 'email', 'message']);
+        $this->postJson(route('contact.store'), ['email' => 'pas-un-email'])->assertJsonValidationErrors(['name', 'phone', 'message']);
     }
 
     public function test_customers_can_track_their_order_with_number_and_phone(): void

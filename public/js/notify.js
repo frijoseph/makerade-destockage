@@ -101,7 +101,7 @@
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const cv = document.createElement('canvas'); cv.className = 'mk-confetti';
     cv.width = innerWidth; cv.height = innerHeight; document.body.appendChild(cv);
-    const ctx = cv.getContext('2d'), colors = ['#237a32', '#f2a516', '#e0364b', '#2e8bd6', '#9b59d0', '#ffffff'];
+    const ctx = cv.getContext('2d'), colors = [(window.MK_SHOP && window.MK_SHOP.primary) || '#237a32','#f2a516', '#e0364b', '#2e8bd6', '#9b59d0', '#ffffff'];
     const parts = Array.from({ length: count }, () => ({ x: innerWidth / 2 + (Math.random() - .5) * 200, y: innerHeight * .55, vx: (Math.random() - .5) * 14, vy: -Math.random() * 15 - 5, s: Math.random() * 7 + 4, r: Math.random() * 6, vr: (Math.random() - .5) * .4, c: colors[(Math.random() * colors.length) | 0] }));
     const t0 = performance.now();
     (function tick(t) {
@@ -113,7 +113,13 @@
 
   const copy = async text => { try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; } };
 
-  window.MKUI = { esc, toast, confirm, errors, formModal, sendDelete, confetti, copy, flashNext, csrf };
+  /* ---------- modale de consultation (contenu HTML déjà échappé côté serveur) ---------- */
+  function view({ title = '', html = '', width = 720, confirmText = 'Fermer' } = {}) {
+    if (!hasSwal()) return Promise.resolve(null);
+    return Swal.fire({ ...base, title, html, width, showConfirmButton: true, confirmButtonText: confirmText, showCloseButton: true, customClass: cls('mk-swal-form', 'mk-swal-view') });
+  }
+
+  window.MKUI = { esc, toast, confirm, errors, view, formModal, sendDelete, confetti, copy, flashNext, csrf };
 
   /* ---------- messages de session (flash) + toast différé ---------- */
   const run = () => {

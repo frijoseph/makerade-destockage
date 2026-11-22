@@ -66,22 +66,26 @@
     <div class="table-wrap">
         <table class="table">
             <thead>
-                <tr><th>Commande</th><th>Date</th><th>Client</th><th>Canal</th><th>Statut</th><th>Paiement</th><th class="num">Articles</th><th class="num">Total</th></tr>
+                <tr><th>Commande</th><th>Date</th><th>Client</th><th>Canal</th><th>Statut</th><th>Paiement</th><th class="num">Articles</th><th class="num">Total</th><th class="actions"><span class="sr-only">Actions</span></th></tr>
             </thead>
             <tbody>
             @forelse ($orders as $order)
                 <tr data-href="{{ route('admin.orders.show', $order) }}">
                     <td><a href="{{ route('admin.orders.show', $order) }}" class="strong">{{ $order->number }}</a></td>
                     <td>{{ $order->placed_at->translatedFormat('j M Y') }}<small>{{ $order->placed_at->format('H:i') }}</small></td>
-                    <td>{{ $order->customer->name }}<small>{{ $order->customer->phone }}{{ $order->shipping_city ? ' · '.$order->shipping_city : '' }}</small></td>
+                    <td>{{ $order->customer->name }}<small>{{ $shop->phone($order->customer->phone) }}{{ $order->shipping_city ? ' · '.$order->shipping_city : '' }}</small></td>
                     <td>{{ $order->channel->label() }}</td>
                     <td><x-admin.badge :tone="$order->status->tone()">{{ $order->status->label() }}</x-admin.badge></td>
                     <td><x-admin.badge :tone="$order->payment_status->tone()">{{ $order->payment_status->label() }}</x-admin.badge><small class="with-ic"><x-payment-icon :method="$order->payment_method" :size="16" /> {{ $order->payment_method->label() }}</small></td>
                     <td class="num">{{ (int) $order->units }}</td>
                     <td class="num strong">{{ Money::format($order->total) }}</td>
+                    <td class="actions">
+                        <button type="button" class="icon-btn" data-order-preview="{{ route('admin.orders.preview', $order) }}" data-title="Commande {{ $order->number }}" aria-label="Aperçu de la commande {{ $order->number }}"><x-admin.icon name="eye" :size="17" /></button>
+                        <a href="{{ route('admin.orders.print', [$order, 'delivery', 'auto' => 1]) }}" target="_blank" rel="noopener" class="icon-btn" aria-label="Imprimer le bon de livraison {{ $order->number }}"><x-admin.icon name="printer" :size="17" /></a>
+                    </td>
                 </tr>
             @empty
-                <tr><td colspan="8" class="empty">Aucune commande ne correspond à ces filtres.</td></tr>
+                <tr><td colspan="9" class="empty">Aucune commande ne correspond à ces filtres.</td></tr>
             @endforelse
             </tbody>
         </table>

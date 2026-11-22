@@ -26,6 +26,7 @@
             <div class="srow total"><span>Total</span><b>{{ $money($order->total) }}</b></div>
             <div class="srow"><span>Paiement</span><b class="with-ic"><x-payment-icon :method="$order->payment_method" :size="22" /> {{ $order->payment_method->label() }}</b></div>
             <div class="srow"><span>Livraison à</span><b>{{ $order->shipping_city }}</b></div>
+            <a href="{{ $receiptUrl }}" target="_blank" rel="noopener" class="btn btn-ghost block"><x-icon name="package" :size="18" /> Imprimer mon reçu</a>
             <a href="{{ route('shop') }}" class="btn btn-primary block">Continuer mes achats</a>
         </aside>
     </div>

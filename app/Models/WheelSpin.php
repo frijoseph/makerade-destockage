@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['popup_id', 'email', 'prize', 'coupon_code', 'ip'])]
+#[Fillable(['popup_id', 'email', 'phone', 'prize', 'coupon_code', 'ip'])]
 class WheelSpin extends Model
 {
     /**

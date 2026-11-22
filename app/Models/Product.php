@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
-    'category_id', 'brand_id', 'slug', 'sku', 'name', 'variant', 'description',
+    'category_id', 'brand_id', 'slug', 'sku', 'name', 'variant', 'option_names', 'description',
     'price', 'old_price', 'cost_price', 'stock', 'low_stock_threshold',
     'rating', 'reviews', 'kind', 'c1', 'c2', 'label', 'image',
     'is_new', 'is_hot', 'is_active',
@@ -41,6 +41,7 @@ class Product extends Model
             'cost_price' => 'decimal:2',
             'rating' => 'decimal:1',
             'stock' => 'integer',
+            'option_names' => 'array',
             'low_stock_threshold' => 'integer',
             'reviews' => 'integer',
             'is_new' => 'boolean',
@@ -63,6 +64,39 @@ class Product extends Model
     public function brand(): BelongsTo
     {
         return $this->belongsTo(Brand::class);
+    }
+
+    /**
+     * Secondary photos (the main photo stays in the `image` column).
+     *
+     * @return HasMany<ProductImage, $this>
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('position')->orderBy('id');
+    }
+
+    /**
+     * @return HasMany<ProductVariant, $this>
+     */
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->orderBy('position')->orderBy('id');
+    }
+
+    public function hasVariants(): bool
+    {
+        return $this->variants->isNotEmpty();
+    }
+
+    /**
+     * Units that can actually be sold: only the active variants count when there are some.
+     */
+    public function sellableStock(): int
+    {
+        return $this->hasVariants()
+            ? (int) $this->variants->where('is_active', true)->sum('stock')
+            : $this->stock;
     }
 
     /**
@@ -162,13 +196,37 @@ class Product extends Model
             'label' => $this->label ?? $this->name,
             'is_new' => $this->is_new,
             'hot' => $this->is_hot,
-            'stock' => $this->stock,
+            'stock' => $this->sellableStock(),
             'sold' => (int) ($this->sold ?? 0),
             'description' => $this->description,
         ];
 
         if ($url = $this->image_url) {
             $catalog['image'] = $url;
+        }
+
+        $gallery = array_values(array_filter([$url ?? null, ...$this->images->map(fn (ProductImage $image): string => $image->url)->all()]));
+        if (count($gallery) > 1) {
+            $catalog['images'] = $gallery;
+        }
+
+        if ($this->hasVariants()) {
+            $activeVariants = $this->variants->where('is_active', true)->values();
+            $catalog['option_names'] = array_values(array_filter((array) $this->option_names));
+            $catalog['variants'] = $activeVariants->map(fn (ProductVariant $variant): array => [
+                'id' => $variant->id,
+                'name' => $variant->name,
+                'options' => array_values(array_filter([$variant->option1, $variant->option2, $variant->option3], fn ($option): bool => $option !== null && $option !== '')),
+                'price' => $variant->effectivePrice(),
+                'old_price' => $variant->effectiveOldPrice(),
+                'stock' => $variant->stock,
+                'image' => $variant->image_url,
+            ])->all();
+
+            $prices = $activeVariants->map(fn (ProductVariant $variant): float => $variant->effectivePrice());
+            if ($prices->isNotEmpty() && $prices->min() < $prices->max()) {
+                $catalog['price_from'] = $prices->min();
+            }
         }
 
         return $catalog;

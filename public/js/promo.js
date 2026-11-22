@@ -59,6 +59,18 @@
   const head = p => `${p.image ? `<div class="pp-img" style="background-image:url('${esc(p.image)}')"></div>` : `<div class="pp-ic">${p.kind === 'newsletter' ? '💌' : p.kind === 'wheel' ? '🎡' : '🎁'}</div>`}<h3 class="pp-title">${esc(p.title)}</h3>${p.body ? `<p class="pp-body">${esc(p.body)}</p>` : ''}`;
   const accent = p => el => el.style.setProperty('--ac', p.accent);
 
+  /* champ téléphone (indicatif recherchable + numéro) pour les popups */
+  const phoneHtml = () => {
+    const ph = SHOP.phone || { default: 'CI', countries: [] };
+    const opts = ph.countries.map(c => `<option value="${esc(c.iso)}" data-short="${esc(c.flag)} +${esc(c.dial)}" ${c.iso === ph.default ? 'selected' : ''}>${esc(c.flag)} ${esc(c.name)} (+${esc(c.dial)})</option>`).join('');
+    return `<div class="phone-field" data-phone><select name="phone_country" aria-label="Indicatif du pays" data-search-from="1">${opts}</select><input type="tel" name="phone" inputmode="tel" autocomplete="tel-national" placeholder="07 00 00 00 00" aria-label="Numéro de téléphone"></div>`;
+  };
+  const readPhone = () => {
+    const pop = Swal.getPopup(), phone = $('[name=phone]', pop).value.trim();
+    if (!phone) { Swal.showValidationMessage('Saisissez votre numéro de téléphone.'); return null; }
+    return { phone, phone_country: $('[name=phone_country]', pop).value };
+  };
+
   function showPromo(p) {
     Swal.fire({
       buttonsStyling: false, reverseButtons: true, showCloseButton: true, showCancelButton: true,
@@ -77,12 +89,14 @@
   function showNewsletter(p) {
     Swal.fire({
       buttonsStyling: false, reverseButtons: true, showCloseButton: true, showCancelButton: true, showLoaderOnConfirm: true,
-      customClass: { popup: 'mk-swal mk-promo', confirmButton: 'mk-btn mk-btn-primary mk-cta', cancelButton: 'mk-btn mk-btn-ghost', actions: 'mk-swal-actions', closeButton: 'mk-swal-close', input: 'mk-input' },
-      html: head(p), input: 'email', inputPlaceholder: 'Votre adresse e-mail', inputAttributes: { autocomplete: 'email', 'aria-label': 'Adresse e-mail' },
+      customClass: { popup: 'mk-swal mk-promo', confirmButton: 'mk-btn mk-btn-primary mk-cta', cancelButton: 'mk-btn mk-btn-ghost', actions: 'mk-swal-actions', closeButton: 'mk-swal-close' },
+      html: head(p) + phoneHtml(),
       confirmButtonText: p.button_label || 'Je m’abonne', cancelButtonText: 'Non merci',
-      didOpen: el => accent(p)(el),
-      inputValidator: v => (/^\S+@\S+\.\S+$/.test(v || '') ? undefined : 'Saisissez une adresse e-mail valide.'),
-      preConfirm: async email => { try { return await post(SHOP.endpoints.newsletter, { email, popup_id: p.id }); } catch (e) { Swal.showValidationMessage(e.message); return false; } },
+      didOpen: el => { accent(p)(el); window.MKSelects?.enhance(el); },
+      preConfirm: async () => {
+        const who = readPhone(); if (!who) return false;
+        try { return await post(SHOP.endpoints.newsletter, { ...who, popup_id: p.id }); } catch (e) { Swal.showValidationMessage(e.message); return false; }
+      },
     }).then(r => {
       if (!r.isConfirmed) return;
       const data = r.value || {};
@@ -117,14 +131,13 @@
     Swal.fire({
       buttonsStyling: false, reverseButtons: true, showCloseButton: true, showCancelButton: true, showLoaderOnConfirm: true, allowOutsideClick: () => !Swal.isLoading(),
       customClass: { popup: 'mk-swal mk-promo mk-wheelpop', confirmButton: 'mk-btn mk-btn-primary mk-cta', cancelButton: 'mk-btn mk-btn-ghost', actions: 'mk-swal-actions', closeButton: 'mk-swal-close', input: 'mk-input' },
-      html: `<h3 class="pp-title">${esc(p.title)}</h3>${p.body ? `<p class="pp-body">${esc(p.body)}</p>` : ''}<div class="wheel"><span class="wheel-pin" aria-hidden="true"></span><div class="wheel-disc" id="wheelDisc"><canvas id="wheelCv" aria-label="Roue de la chance"></canvas></div></div>`,
-      input: 'email', inputPlaceholder: 'Votre e-mail pour jouer', inputAttributes: { autocomplete: 'email', 'aria-label': 'Adresse e-mail' },
+      html: `<h3 class="pp-title">${esc(p.title)}</h3>${p.body ? `<p class="pp-body">${esc(p.body)}</p>` : ''}<div class="wheel"><span class="wheel-pin" aria-hidden="true"></span><div class="wheel-disc" id="wheelDisc"><canvas id="wheelCv" aria-label="Roue de la chance"></canvas></div></div>${phoneHtml()}`,
       confirmButtonText: p.button_label || 'Tourner la roue !', cancelButtonText: 'Plus tard',
-      didOpen: el => { accent(p)(el); drawWheel($('#wheelCv', el), p.segments); },
-      inputValidator: v => (/^\S+@\S+\.\S+$/.test(v || '') ? undefined : 'Saisissez une adresse e-mail valide pour jouer.'),
-      preConfirm: async email => {
+      didOpen: el => { accent(p)(el); drawWheel($('#wheelCv', el), p.segments); window.MKSelects?.enhance(el); },
+      preConfirm: async () => {
+        const who = readPhone(); if (!who) return false;
         let res;
-        try { res = await post(SHOP.endpoints.spin, { popup_id: p.id, email }); } catch (e) { Swal.showValidationMessage(e.message); return false; }
+        try { res = await post(SHOP.endpoints.spin, { popup_id: p.id, ...who }); } catch (e) { Swal.showValidationMessage(e.message); return false; }
         const seg = 360 / p.segments.length, turn = 360 * 5 - (res.index + .5) * seg + (Math.random() - .5) * seg * .6;
         const disc = $('#wheelDisc'); disc.style.transition = reduce ? 'transform .4s' : 'transform 4.6s cubic-bezier(.12,.67,.12,1)'; disc.style.transform = `rotate(${turn}deg)`;
         await new Promise(r => setTimeout(r, reduce ? 500 : 4800));

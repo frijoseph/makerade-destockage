@@ -55,7 +55,8 @@ ul,ol{padding:0;list-style:none}
 .topbar-txt b{color:var(--yellow)}
 
 /* =============== HEADER =============== */
-.header{background:#fff;position:sticky;top:0;z-index:100;transition:box-shadow .3s}
+.topstack{position:sticky;top:0;z-index:100}
+.header{background:#fff;position:relative;z-index:100;transition:box-shadow .3s}
 .header.stuck{box-shadow:0 8px 24px -14px rgba(0,0,0,.3)}
 .header-main{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:36px;height:84px}
 .logo{display:flex;align-items:center;gap:10px;color:var(--g)}

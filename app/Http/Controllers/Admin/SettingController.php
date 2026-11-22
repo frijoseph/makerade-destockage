@@ -22,7 +22,7 @@ class SettingController extends Controller
             'groups' => $groups,
             'group' => $group,
             'fields' => $groups[$group]['fields'],
-            'values' => collect($groups[$group]['fields'])->mapWithKeys(fn (array $field, string $key): array => [$key => Setting::get($key)]),
+            'values' => collect($groups[$group]['fields'])->mapWithKeys(fn (array $field, string $key): array => [$key => $field['type'] === 'secret' ? (Setting::get($key) !== '') : Setting::get($key)]),
             'zones' => $group === 'delivery' ? DeliveryZone::query()->orderBy('position')->orderBy('name')->get() : collect(),
         ]);
     }
@@ -33,6 +33,16 @@ class SettingController extends Controller
 
         foreach ($request->groupFields() as $key => $field) {
             $value = $request->validated("settings.{$key}");
+
+            if ($field['type'] === 'secret') {
+                if ($request->boolean("clear_secrets.{$key}")) {
+                    $values[$key] = '';
+                } elseif ($value !== null && $value !== '') {
+                    $values[$key] = trim($value);
+                }
+
+                continue;
+            }
 
             $values[$key] = match ($field['type']) {
                 'image' => $this->storeImage($request->file("files.{$key}")) ?? $value,

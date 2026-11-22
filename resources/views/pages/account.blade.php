@@ -30,7 +30,7 @@
             <form method="POST" action="{{ route('account.login') }}" class="cform authform" data-pane="login" data-validate novalidate @if ($registerOpen) hidden @endif>
                 @csrf
                 @if ($errors->login->any())<p class="form-error" role="alert">{{ $errors->login->first() }}</p>@endif
-                <label>E-mail<input type="email" name="email" value="{{ old('email') }}" required autocomplete="username" placeholder="vous@exemple.com"></label>
+                <label>Téléphone ou e-mail<input type="text" name="login" value="{{ old('login', old('email')) }}" required autocomplete="username" inputmode="text" placeholder="07 00 00 00 00 ou vous@exemple.com"><small class="hint">Sans indicatif, le {{ \App\Support\Phone::countries()[\App\Support\Phone::defaultIso()]['name'] }} (+{{ \App\Support\Phone::dial() }}) est utilisé. Autre pays : tapez +indicatif.</small></label>
                 <label>Mot de passe
                     <span class="pass"><input type="password" name="password" required autocomplete="current-password" placeholder="••••••••"><button type="button" data-toggle-pass aria-label="Afficher le mot de passe"><x-icon name="eye" :size="18" /></button></span>
                 </label>
@@ -44,10 +44,8 @@
             <form method="POST" action="{{ route('account.register') }}" class="cform authform" data-pane="register" data-validate novalidate @unless ($registerOpen) hidden @endunless>
                 @csrf
                 <label>Nom complet<input name="name" value="{{ old('name') }}" required autocomplete="name" placeholder="Prénom et nom" @error('name') class="invalid" @enderror>@error('name')<small class="fe">{{ $message }}</small>@enderror</label>
-                <div class="row2">
-                    <label>E-mail<input type="email" name="email" value="{{ old('email') }}" required autocomplete="email" @error('email') class="invalid" @enderror>@error('email')<small class="fe">{{ $message }}</small>@enderror</label>
-                    <label>Téléphone<input type="tel" name="phone" value="{{ old('phone') }}" required autocomplete="tel" placeholder="{{ $shop->contact_phone }}" @error('phone') class="invalid" @enderror>@error('phone')<small class="fe">{{ $message }}</small>@enderror</label>
-                </div>
+                <label>Téléphone <x-phone-input name="phone" required />@error('phone')<small class="fe">{{ $message }}</small>@enderror</label>
+                <label>E-mail <em>(facultatif)</em><input type="email" name="email" value="{{ old('email') }}" autocomplete="email" placeholder="vous@exemple.com" @error('email') class="invalid" @enderror>@error('email')<small class="fe">{{ $message }}</small>@enderror<small class="hint">Utile pour récupérer votre mot de passe et recevoir vos reçus.</small></label>
                 <div class="row2">
                     <label>Mot de passe
                         <span class="pass"><input type="password" name="password" required autocomplete="new-password" placeholder="8 caractères minimum" @error('password') class="invalid" @enderror><button type="button" data-toggle-pass aria-label="Afficher le mot de passe"><x-icon name="eye" :size="18" /></button></span>
@@ -66,7 +64,7 @@
     @php $firstName = \Illuminate\Support\Str::before($member->name, ' '); @endphp
     <div class="acc-head reveal">
         <span class="acc-avatar">{{ mb_strtoupper(mb_substr($member->name, 0, 1)) }}</span>
-        <div><h2>Bonjour, {{ $firstName }} 👋</h2><p>{{ $member->email }}</p></div>
+        <div><h2>Bonjour, {{ $firstName }} 👋</h2><p>{{ $member->phone ? $shop->phone($member->phone) : $member->email }}</p></div>
         <form method="POST" action="{{ route('account.logout') }}" data-confirm-logout>
             @csrf
             <button class="btn btn-ghost"><x-icon name="logout" :size="18" /> Déconnexion</button>
@@ -96,20 +94,34 @@
                     <b>{{ $shop->money($order->total) }}</b>
                     <span class="with-ic"><x-payment-icon :method="$order->payment_method" :size="20" /> {{ $order->payment_status->label() }} · {{ $order->payment_method->label() }}</span>
                     <a href="{{ \Illuminate\Support\Facades\URL::temporarySignedRoute('checkout.show', now()->addHour(), ['order' => $order->number]) }}" class="link-all">Voir le détail <x-icon name="arrow-right" :size="15" /></a>
+                    <a href="{{ \Illuminate\Support\Facades\URL::temporarySignedRoute('checkout.receipt', now()->addHour(), ['order' => $order->number, 'auto' => 1]) }}" target="_blank" rel="noopener" class="link-all">Reçu <x-icon name="arrow-right" :size="15" /></a>
                 </div>
             </article>
         @empty
             <div class="empty"><x-icon name="package" :size="44" :stroke="1.3" /><h3>Aucune commande pour l’instant</h3><p>Vos prochains achats apparaîtront ici.</p><a class="btn btn-primary" href="{{ route('shop') }}">Découvrir la boutique</a></div>
         @endforelse
+
+        <details class="acc-claim" @if ($errors->claim->any()) open @endif>
+            <summary>Une commande passée avant votre inscription ?</summary>
+            <form method="POST" action="{{ route('account.claim') }}" class="cform" data-validate novalidate>
+                @csrf
+                <p class="hint">Pour protéger vos données, retrouvez-la avec son numéro et le montant payé (indiqués sur votre reçu ou votre confirmation). Elle doit avoir été passée avec le téléphone de votre compte.</p>
+                <div class="row2">
+                    <label>Numéro de commande<input name="number" value="{{ old('number') }}" placeholder="{{ \App\Models\Order::exampleNumber() }}" required></label>
+                    <label>Montant payé<input name="total" value="{{ old('total') }}" inputmode="decimal" placeholder="Ex. 12500" required></label>
+                </div>
+                @if ($errors->claim->any())<small class="fe">{{ $errors->claim->first() }}</small>@endif
+                <button class="btn btn-primary">Retrouver ma commande</button>
+            </form>
+        </details>
     </div>
 
     <form method="POST" action="{{ route('account.profile') }}" class="cform acc-pane" data-pane="profile" data-validate novalidate hidden>
         @csrf @method('PUT')
-        <div class="row2">
-            <label>Nom complet<input name="name" value="{{ old('name', $member->name) }}" required @error('name') class="invalid" @enderror>@error('name')<small class="fe">{{ $message }}</small>@enderror</label>
-            <label>Téléphone<input type="tel" name="phone" value="{{ old('phone', $member->phone) }}" required @error('phone') class="invalid" @enderror>@error('phone')<small class="fe">{{ $message }}</small>@enderror</label>
-        </div>
-        <label>E-mail<input type="email" name="email" value="{{ old('email', $member->email) }}" required @error('email') class="invalid" @enderror>@error('email')<small class="fe">{{ $message }}</small>@enderror</label>
+        <label>Nom complet<input name="name" value="{{ old('name', $member->name) }}" required @error('name') class="invalid" @enderror>@error('name')<small class="fe">{{ $message }}</small>@enderror</label>
+        <label>Téléphone <x-phone-input name="phone" :value="$member->phone" required />@error('phone')<small class="fe">{{ $message }}</small>@enderror</label>
+        <label>E-mail <em>(facultatif)</em><input type="email" name="email" value="{{ old('email', $member->email) }}" @error('email') class="invalid" @enderror>@error('email')<small class="fe">{{ $message }}</small>@enderror
+            @if (! $member->email)<small class="hint">Ajoutez un e-mail pour pouvoir récupérer votre mot de passe.</small>@endif</label>
         <div class="row2">
             <label>Ville<input name="city" value="{{ old('city', $profile?->city) }}" list="accCities"></label>
             <label>Adresse de livraison<input name="address" value="{{ old('address', $profile?->address) }}" placeholder="Quartier, rue, repère"></label>

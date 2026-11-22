@@ -116,7 +116,7 @@
 
   /* ---------- placeholder de recherche « machine à écrire » (produits réels du catalogue) ---------- */
   const inp = $('#searchInput');
-  const words = Object.values(CAT).sort(() => Math.random() - .5).slice(0, 6).map(p => `${p.name}…`);
+  const words = Object.values(CAT).filter(p => !p.virtual).sort(() => Math.random() - .5).slice(0, 6).map(p => `${p.name}…`);
   if (inp && words.length) {
     let w = 0, i = 0, dir = 1;
     const tick = () => {

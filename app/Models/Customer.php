@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Phone;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,13 +33,11 @@ class Customer extends Model
     }
 
     /**
-     * Normalises a phone number so the same customer is found whatever the formatting.
+     * International format of a phone number (+2250700000000), whatever the way it was typed.
      */
-    public static function normalizePhone(string $phone): string
+    public static function normalizePhone(string $phone, ?string $iso = null): string
     {
-        $digits = preg_replace('/[^\d+]/', '', $phone) ?? '';
-
-        return str_starts_with($digits, '00') ? '+'.substr($digits, 2) : $digits;
+        return Phone::normalize($phone, $iso) ?? '';
     }
 
     public function initials(): string

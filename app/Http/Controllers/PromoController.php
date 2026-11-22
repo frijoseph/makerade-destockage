@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Coupon;
 use App\Models\NewsletterSubscriber;
 use App\Models\Popup;
-use App\Models\Product;
 use App\Models\WheelSpin;
+use App\Support\CartResolver;
 use App\Support\Money;
 use App\Support\OrderPlacement;
+use App\Support\Phone;
 use App\Support\Promotions;
 use DomainException;
 use Illuminate\Http\JsonResponse;
@@ -25,16 +26,21 @@ class PromoController extends Controller
      */
     public function coupon(Request $request): JsonResponse
     {
+        $request->merge(['phone' => Phone::normalize($request->input('phone'), $request->input('phone_country'))]);
+
         $data = $request->validate([
             'code' => ['nullable', 'string', 'max:40'],
             'city' => ['nullable', 'string', 'max:80'],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'phone' => ['nullable', 'string', 'regex:/^\+\d{8,15}$/'],
             'items' => ['required', 'array', 'min:1', 'max:50'],
             'items.*' => ['integer', 'min:1', 'max:99'],
         ]);
 
-        $subtotal = (float) Product::query()->active()->whereIn('slug', array_keys($data['items']))->get()
-            ->sum(fn (Product $product): float => (float) $product->price * (int) $data['items'][$product->slug]);
+        try {
+            $subtotal = CartResolver::subtotal($data['items']);
+        } catch (DomainException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
 
         try {
             $promotion = Promotions::resolve($subtotal, $data['code'] ?? null, $data['phone'] ?? null);
@@ -77,10 +83,13 @@ class PromoController extends Controller
      */
     public function spin(Request $request): JsonResponse
     {
+        $request->merge(['phone' => Phone::normalize($request->input('phone'), $request->input('phone_country'))]);
+
         $data = $request->validate([
             'popup_id' => ['required', 'integer'],
-            'email' => ['required', 'email', 'max:255'],
-        ]);
+            'phone' => ['nullable', 'string', 'regex:/^\+\d{8,15}$/', 'required_without:email'],
+            'email' => ['nullable', 'email', 'max:255', 'required_without:phone'],
+        ], ['phone.required_without' => 'Indiquez votre numéro de téléphone pour jouer.', 'phone.regex' => 'Numéro de téléphone invalide.', 'email.required_without' => 'Indiquez votre numéro de téléphone pour jouer.']);
 
         $popup = Popup::query()->live()->where('kind', 'wheel')->find($data['popup_id']);
         $segments = collect((array) $popup?->segments)->values();
@@ -89,10 +98,17 @@ class PromoController extends Controller
             return response()->json(['message' => 'Cette animation n’est plus disponible.'], 404);
         }
 
-        $email = mb_strtolower($data['email']);
+        $phone = $data['phone'] ?? null;
+        $email = isset($data['email']) ? mb_strtolower($data['email']) : null;
 
-        if (WheelSpin::query()->where('popup_id', $popup->id)->where('email', $email)->exists()) {
-            return response()->json(['message' => 'Vous avez déjà tenté votre chance avec cet e-mail. Un seul tour par personne !'], 422);
+        $alreadyPlayed = WheelSpin::query()->where('popup_id', $popup->id)
+            ->where(fn ($query) => $query
+                ->when($phone, fn ($query) => $query->orWhere('phone', $phone))
+                ->when($email, fn ($query) => $query->orWhere('email', $email)))
+            ->exists();
+
+        if ($alreadyPlayed) {
+            return response()->json(['message' => 'Vous avez déjà tenté votre chance avec ce numéro. Un seul tour par personne !'], 422);
         }
 
         $index = $this->drawSegment($segments->all());
@@ -105,12 +121,13 @@ class PromoController extends Controller
 
         WheelSpin::query()->create([
             'popup_id' => $popup->id,
+            'phone' => $phone,
             'email' => $email,
             'prize' => (string) ($segment['label'] ?? ''),
             'coupon_code' => $code ?: null,
             'ip' => $request->ip(),
         ]);
-        NewsletterSubscriber::query()->firstOrCreate(['email' => $email]);
+        NewsletterSubscriber::subscribe($phone, $email);
         $popup->increment('clicks');
 
         return response()->json([

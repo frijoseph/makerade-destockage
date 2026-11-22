@@ -125,7 +125,7 @@ class AdminPagesTest extends TestCase
 
         $this->actingAs(User::factory()->admin()->create())
             ->put(route('admin.settings.update', 'home'), [
-                'settings' => ['hero_slides' => [array_merge($slides[0], ['title' => 'Nouveau titre'])], 'flash_count' => 4, 'featured_count' => 8],
+                'settings' => ['hero_slides' => [array_merge($slides[0], ['title' => 'Nouveau titre'])], 'flash_count' => 4, 'featured_count' => 8, 'brands_limit' => 0, 'brands_speed' => 32],
                 'files' => ['hero_slides' => [['image' => UploadedFile::fake()->image('slide.jpg')]]],
             ])
             ->assertSessionHasNoErrors();

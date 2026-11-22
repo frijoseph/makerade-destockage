@@ -41,7 +41,7 @@
             <header class="card-head"><h2>Client et livraison</h2></header>
             <div class="form-grid">
                 <label class="field"><span>Nom complet</span><input type="text" name="customer[name]" value="{{ old('customer.name') }}" required></label>
-                <label class="field"><span>Téléphone</span><input type="tel" name="customer[phone]" value="{{ old('customer.phone') }}" required placeholder="{{ $shop->contact_phone }}"><small>Un client existant est retrouvé par son numéro.</small></label>
+                <div class="field"><span>Téléphone</span><x-phone-input name="customer[phone]" country-name="customer[phone_country]" required /><small>Un client existant est retrouvé par son numéro.</small></div>
                 <label class="field"><span>E-mail <em>(facultatif)</em></span><input type="email" name="customer[email]" value="{{ old('customer.email') }}"></label>
                 <label class="field"><span>Ville</span>
                     <input type="text" name="customer[city]" value="{{ old('customer.city', $shop->default_city) }}" list="cities">

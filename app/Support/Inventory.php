@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Models\User;
 use App\StockMovementType;
@@ -27,20 +28,33 @@ class Inventory
         ?string $reason = null,
         ?Order $order = null,
         ?User $user = null,
+        ?ProductVariant $variant = null,
     ): StockMovement {
-        return DB::transaction(function () use ($product, $type, $quantity, $reason, $order, $user): StockMovement {
+        return DB::transaction(function () use ($product, $type, $quantity, $reason, $order, $user, $variant): StockMovement {
             $locked = Product::query()->lockForUpdate()->findOrFail($product->id);
-            $newStock = $locked->stock + $quantity;
+            $lockedVariant = $variant ? ProductVariant::query()->lockForUpdate()->findOrFail($variant->id) : null;
+            $current = $lockedVariant?->stock ?? $locked->stock;
+            $newStock = $current + $quantity;
 
             if ($newStock < 0) {
-                throw new DomainException("Stock insuffisant pour « {$locked->name} » ({$locked->stock} disponible(s)).");
+                $label = $lockedVariant ? "{$locked->name} ({$lockedVariant->name})" : $locked->name;
+
+                throw new DomainException("Stock insuffisant pour « {$label} » ({$current} disponible(s)).");
             }
 
-            $locked->update(['stock' => $newStock]);
-            $product->stock = $newStock;
+            if ($lockedVariant) {
+                $lockedVariant->update(['stock' => $newStock]);
+                $variant->stock = $newStock;
+                $locked->update(['stock' => (int) ProductVariant::query()->where('product_id', $locked->id)->sum('stock')]);
+                $product->stock = $locked->stock;
+            } else {
+                $locked->update(['stock' => $newStock]);
+                $product->stock = $newStock;
+            }
 
             return StockMovement::query()->create([
                 'product_id' => $locked->id,
+                'variant_id' => $lockedVariant?->id,
                 'order_id' => $order?->id,
                 'user_id' => $user?->id,
                 'type' => $type,
@@ -54,14 +68,14 @@ class Inventory
     /**
      * Sets the stock to an exact counted value (inventory count).
      */
-    public static function setTo(Product $product, int $countedStock, ?string $reason = null, ?User $user = null): ?StockMovement
+    public static function setTo(Product $product, int $countedStock, ?string $reason = null, ?User $user = null, ?ProductVariant $variant = null): ?StockMovement
     {
-        $difference = $countedStock - $product->stock;
+        $difference = $countedStock - ($variant?->stock ?? $product->stock);
 
         if ($difference === 0) {
             return null;
         }
 
-        return static::move($product, StockMovementType::Adjustment, $difference, $reason ?? 'Inventaire', user: $user);
+        return static::move($product, StockMovementType::Adjustment, $difference, $reason ?? 'Inventaire', user: $user, variant: $variant);
     }
 }

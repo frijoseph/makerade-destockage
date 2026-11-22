@@ -24,13 +24,15 @@
             @endif
         </div>
         <form class="cform reveal" id="contactForm" style="--d:100ms" novalidate>
+            <label>Nom complet<input name="name" required autocomplete="name" placeholder="Prénom et nom"></label>
             <div class="row2">
-                <label>Nom complet<input name="name" required autocomplete="name" placeholder="Prénom et nom"></label>
-                <label>E-mail<input name="email" type="email" required autocomplete="email" placeholder="vous@exemple.com"></label>
+                <label>Téléphone <x-phone-input name="phone" required /></label>
+                <label>E-mail <em>(facultatif)</em><input name="email" type="email" autocomplete="email" placeholder="vous@exemple.com"></label>
             </div>
             <label>Sujet<input name="subject" placeholder="Comment pouvons-nous vous aider ?"></label>
             <label>Message<textarea name="message" rows="5" required placeholder="Écrivez votre message..."></textarea></label>
             <p class="checkout-err" data-form-error role="alert" hidden></p>
+            <input type="text" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true">
             <button class="btn btn-primary btn-lg"><x-icon name="send" :size="18" /> Envoyer le message</button>
         </form>
     </div>

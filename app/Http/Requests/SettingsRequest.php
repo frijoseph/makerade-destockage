@@ -114,6 +114,7 @@ class SettingsRequest extends FormRequest
             'email' => ['nullable', 'email', 'max:255'],
             'url' => ['nullable', 'url', 'max:255'],
             'tel' => ['nullable', 'string', 'max:30'],
+            'secret' => ['nullable', 'string', 'max:400'],
             'number' => ['nullable', 'numeric'],
             'select' => ['nullable', Rule::in(array_map('strval', array_keys($field['options'])))],
             'boolean' => ['boolean'],

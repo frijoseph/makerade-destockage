@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Phone;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,11 +28,20 @@ class PasswordResetController extends Controller
      */
     public function email(Request $request): RedirectResponse
     {
-        $request->validate(['email' => ['required', 'email']]);
+        $login = trim((string) $request->input('login', $request->input('email')));
+        $request->merge(['login' => $login]);
+        $request->validate(['login' => ['required', 'string', 'max:255']]);
 
-        Password::sendResetLink($request->only('email'));
+        $user = User::query()
+            ->where(str_contains($login, '@') ? 'email' : 'phone', str_contains($login, '@') ? mb_strtolower($login) : Phone::normalize($login, $request->input('phone_country')))
+            ->first();
 
-        return back()->with('status', 'Si un compte existe avec cette adresse, un e-mail de réinitialisation vient de partir. Pensez à vérifier vos courriers indésirables.');
+        // Without an e-mail on the account nothing can be sent: the answer stays the same on purpose.
+        if ($user?->email) {
+            Password::sendResetLink(['email' => $user->email]);
+        }
+
+        return back()->with('status', 'Si un compte correspond, un e-mail de réinitialisation vient de partir. Pensez à vérifier vos courriers indésirables. Sans e-mail sur votre compte, contactez-nous.');
     }
 
     public function reset(Request $request, string $token): View

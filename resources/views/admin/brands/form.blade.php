@@ -29,6 +29,8 @@
                 </select>
                 <small>Utilisé quand aucun logo n’est envoyé.</small>
             </label>
+            <label class="field"><span>Ordre d’affichage</span><input type="number" name="position" min="0" value="{{ old('position', $brand->position) }}"><small>Les plus petits nombres apparaissent en premier.</small></label>
+            <label class="field"><span>Lien au clic <em>(facultatif)</em></span><input type="text" name="url" value="{{ old('url', $brand->url) }}" maxlength="255" placeholder="/shop?brand=… ou https://…" @error('url') aria-invalid="true" @enderror><small>Par défaut : recherche des produits de la marque.</small></label>
             <div class="field span-2"><span>Logo <em>(image, facultatif)</em></span>
                 <div class="image-field">
                     <span class="image-thumb" id="brandLogo">@if ($url = \App\Models\Setting::imageUrl($brand->logo))<img src="{{ $url }}" alt="">@else<x-admin.icon name="image" :size="22" />@endif</span>
@@ -38,7 +40,9 @@
             </div>
         </div>
         <input type="hidden" name="is_active" value="0">
+        <input type="hidden" name="is_featured" value="0">
         <label class="check"><input type="checkbox" name="is_active" value="1" @checked(old('is_active', $brand->is_active))> Visible sur la boutique</label>
+        <label class="check"><input type="checkbox" name="is_featured" value="1" @checked(old('is_featured', $brand->is_featured))> Mise en avant dans le bandeau « Nos marques de confiance » de l’accueil</label>
         <div class="form-actions">
             <a href="{{ route('admin.brands.index') }}" class="btn">Annuler</a>
             <button class="btn btn-primary">{{ $isNew ? 'Créer la marque' : 'Enregistrer' }}</button>

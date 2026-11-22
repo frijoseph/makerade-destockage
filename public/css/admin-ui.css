@@ -172,3 +172,31 @@ button.is-loading::after { content: ""; position: absolute; inset: 0; margin: au
 .table th.is-sortable:hover { color: var(--text); }
 [hidden] { display: none !important; }
 .toolbar .ts-wrapper .ts-control { min-height: 44px; }
+
+/* ---------- fiche produit : galerie et variantes ---------- */
+.gallery-admin, .gallery-new { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+.gallery-new:empty { display: none; }
+.gallery-admin li, .gallery-new li { border: 1px solid var(--line); border-radius: 12px; padding: 8px; display: grid; gap: 6px; background: var(--card-2); }
+.gallery-admin img, .gallery-new img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
+.gallery-admin .check { font-size: 12px; }
+.var-axes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+.var-axis { display: grid; gap: 10px; align-content: start; padding: 12px; border: 1px dashed var(--line); border-radius: 12px; }
+.var-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.var-wrap { overflow-x: auto; }
+.var-table input[type=text], .var-table input[type=number] { min-width: 90px; width: 100%; }
+.var-table td { vertical-align: middle; }
+.var-photo { min-width: 130px; display: grid; gap: 4px; }
+.var-photo img { border-radius: 6px; object-fit: cover; }
+.var-photo input[type=file] { max-width: 150px; font-size: 11px; }
+.var-table [hidden] { display: none; }
+.empty-note { text-align: center; color: var(--muted); padding: 18px 0 4px; margin: 0; }
+@media (max-width: 760px) { .var-axes { grid-template-columns: 1fr; } }
+
+/* ---------- assistant IA (admin) ---------- */
+.ai-thread { display: grid; gap: 12px; }
+.ai-line { max-width: 86%; padding: 10px 14px; border-radius: 14px; background: var(--card-2); border: 1px solid var(--line); }
+.ai-line.is-user { margin-left: auto; background: var(--accent-soft); }
+.ai-line small { color: var(--muted); display: block; margin-bottom: 2px; }
+.ai-line p { margin: 0; white-space: pre-line; }
+.ai-test-out { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--card-2); border: 1px solid var(--line); white-space: pre-line; font-size: 14px; }
+.ai-test-out.is-error { border-color: #e0364b; color: #c62c40; }

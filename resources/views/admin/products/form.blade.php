@@ -12,6 +12,23 @@
     <a href="{{ route('admin.products.index') }}" class="btn"><x-admin.icon name="chev-left" :size="18" /> Produits</a>
 @endsection
 
+@push('scripts')
+    <script src="{{ asset('js/admin-variants.js') }}?v={{ filemtime(public_path('js/admin-variants.js')) }}" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.querySelector('[data-gallery-input]'), box = document.querySelector('[data-gallery-preview]');
+            if (!input || !box) return;
+            input.addEventListener('change', () => {
+                box.innerHTML = '';
+                [...input.files].forEach(file => {
+                    const li = document.createElement('li'), img = document.createElement('img');
+                    img.alt = ''; img.src = URL.createObjectURL(file); li.appendChild(img); box.appendChild(li);
+                });
+            });
+        });
+    </script>
+@endpush
+
 @section('content')
 <form method="POST" enctype="multipart/form-data" class="grid-side"
       action="{{ $isNew ? route('admin.products.store') : route('admin.products.update', $product) }}">
@@ -52,13 +69,15 @@
                 <label class="field"><span>Prix barré <em>(facultatif)</em></span><input type="number" name="old_price" value="{{ old('old_price', $product->old_price) }}" min="0" step="0.01" @error('old_price') aria-invalid="true" @enderror><small>Affiche la remise sur le site.</small></label>
                 <label class="field"><span>Prix d’achat <em>(facultatif)</em></span><input type="number" name="cost_price" value="{{ old('cost_price', $product->cost_price) }}" min="0" step="0.01"><small>Sert à calculer la valeur du stock.</small></label>
                 @if ($isNew)
-                    <label class="field"><span>Stock initial</span><input type="number" name="stock" value="{{ old('stock', 0) }}" required min="0" step="1"></label>
+                    <label class="field"><span>Stock initial</span><input type="number" name="stock" value="{{ old('stock', 0) }}" min="0" step="1"><small>Ignoré si vous définissez des variantes (chacune a son stock).</small></label>
                 @else
-                    <div class="field"><span>Stock actuel</span><input type="text" value="{{ $product->stock }}" disabled><small><a class="link" href="{{ route('admin.stock.index', ['product' => $product->id]) }}">Ajuster depuis l’écran Stock</a></small></div>
+                    <div class="field"><span>Stock actuel</span><input type="text" value="{{ $product->stock }}" disabled><small>@if ($product->variants->isNotEmpty())Total de toutes les variantes. @endif<a class="link" href="{{ route('admin.stock.index', ['product' => $product->id]) }}">Ajuster depuis l’écran Stock</a></small></div>
                 @endif
                 <label class="field"><span>Seuil d’alerte</span><input type="number" name="low_stock_threshold" value="{{ old('low_stock_threshold', $product->low_stock_threshold) }}" required min="0" step="1"></label>
             </div>
         </section>
+
+        @include('admin.products.partials.variants')
 
         <section class="card">
             <header class="card-head"><h2>Visuel de secours</h2></header>
@@ -107,6 +126,29 @@
                 @if ($product->image)
                     <label class="check"><input type="checkbox" name="remove_image" value="1"> Supprimer la photo</label>
                 @endif
+            </div>
+        </section>
+
+        <section class="card" id="galleryCard">
+            <header class="card-head"><h2>Photos secondaires</h2></header>
+            <p class="muted" style="margin: -8px 0 12px">Elles s’affichent en miniatures sous la photo principale, sur la fiche produit.</p>
+            @if ($product->exists && $product->images->isNotEmpty())
+                <ul class="gallery-admin">
+                    @foreach ($product->images as $image)
+                        <li>
+                            <img src="{{ $image->url }}" alt="">
+                            <label class="check"><input type="radio" name="promote_image" value="{{ $image->id }}"> Photo principale</label>
+                            <label class="check"><input type="checkbox" name="remove_gallery[]" value="{{ $image->id }}"> Supprimer</label>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+            <div class="form" style="margin-top: 12px">
+                <input type="file" name="gallery[]" multiple accept="image/jpeg,image/png,image/webp" aria-label="Ajouter des photos secondaires" data-gallery-input>
+                <small class="muted" data-gallery-hint>JPG, PNG ou WebP · 3 Mo max chacune · 12 photos au maximum.</small>
+                <ul class="gallery-new" data-gallery-preview></ul>
+                @error('gallery')<small class="fe">{{ $message }}</small>@enderror
+                @foreach ($errors->get('gallery.*') as $messages)<small class="fe">{{ $messages[0] }}</small>@endforeach
             </div>
         </section>
 

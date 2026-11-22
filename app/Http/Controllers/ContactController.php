@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\Popup;
 use App\OrderStatus;
 use App\Support\Money;
+use App\Support\Phone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -20,12 +21,19 @@ class ContactController extends Controller
 {
     public function message(Request $request): JsonResponse
     {
+        if ($request->filled('website')) {
+            return response()->json(['message' => 'Message envoyé. Nous vous répondons très vite.'], 201);
+        }
+
+        $request->merge(['phone' => Phone::normalize($request->input('phone'), $request->input('phone_country'))]);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
+            'phone' => ['required', 'string', 'regex:/^\+\d{8,15}$/'],
+            'email' => ['nullable', 'email', 'max:255'],
             'subject' => ['nullable', 'string', 'max:255'],
             'message' => ['required', 'string', 'max:5000'],
-        ]);
+        ], ['phone.required' => 'Indiquez un numéro de téléphone.', 'phone.regex' => 'Numéro de téléphone invalide.']);
 
         ContactMessage::query()->create($data);
 
@@ -34,12 +42,19 @@ class ContactController extends Controller
 
     public function subscribe(Request $request): JsonResponse
     {
-        $data = $request->validate([
-            'email' => ['required', 'email', 'max:255'],
-            'popup_id' => ['nullable', 'integer'],
-        ]);
+        if ($request->filled('website')) {
+            return response()->json(['message' => 'Merci pour votre inscription !', 'code' => null], 201);
+        }
 
-        NewsletterSubscriber::query()->firstOrCreate(['email' => mb_strtolower($data['email'])]);
+        $request->merge(['phone' => Phone::normalize($request->input('phone'), $request->input('phone_country'))]);
+
+        $data = $request->validate([
+            'phone' => ['nullable', 'string', 'regex:/^\+\d{8,15}$/', 'required_without:email'],
+            'email' => ['nullable', 'email', 'max:255', 'required_without:phone'],
+            'popup_id' => ['nullable', 'integer'],
+        ], ['phone.required_without' => 'Indiquez votre numéro de téléphone.', 'phone.regex' => 'Numéro de téléphone invalide.', 'email.required_without' => 'Indiquez votre numéro de téléphone.']);
+
+        NewsletterSubscriber::subscribe($data['phone'] ?? null, $data['email'] ?? null);
 
         $popup = isset($data['popup_id']) ? Popup::query()->live()->where('kind', 'newsletter')->find($data['popup_id']) : null;
         $code = $popup?->coupon_code ? Coupon::query()->usable()->where('code', Coupon::normalize($popup->coupon_code))->value('code') : null;
@@ -53,14 +68,16 @@ class ContactController extends Controller
      */
     public function track(Request $request): JsonResponse
     {
+        $request->merge(['phone' => Phone::normalize($request->input('phone'), $request->input('phone_country'))]);
+
         $data = $request->validate([
             'number' => ['required', 'string', 'max:20'],
-            'phone' => ['required', 'string', 'max:30'],
-        ]);
+            'phone' => ['required', 'string', 'regex:/^\+\d{8,15}$/'],
+        ], ['phone.regex' => 'Numéro de téléphone invalide.']);
 
         $order = Order::query()
             ->where('number', mb_strtoupper(trim($data['number'])))
-            ->where('shipping_phone', Customer::normalizePhone($data['phone']))
+            ->where('shipping_phone', $data['phone'])
             ->first();
 
         if (! $order) {

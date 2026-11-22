@@ -4,6 +4,10 @@
 .mk-swal .swal2-html-container { color: var(--fg); margin: .6em 0 0; }
 .mk-swal-title, .mk-swal .swal2-title { color: var(--fg) !important; font-size: 1.35rem !important; font-weight: 800 !important; letter-spacing: -.01em; padding: 0 .4em; }
 .mk-swal .swal2-icon { margin-top: .4em; }
+.mk-swal .swal2-icon.swal2-success, .mk-toast .swal2-icon.swal2-success { color: var(--ac); border-color: color-mix(in srgb, var(--ac) 35%, transparent); }
+.mk-swal .swal2-success [class^=swal2-success-line] { background-color: var(--ac) !important; }
+.mk-swal .swal2-success .swal2-success-ring { border-color: color-mix(in srgb, var(--ac) 30%, transparent) !important; }
+.mk-swal .swal2-icon.swal2-info, .mk-swal .swal2-icon.swal2-question { color: var(--ac); border-color: color-mix(in srgb, var(--ac) 45%, transparent); }
 .mk-swal-close { color: var(--mut) !important; }
 .mk-swal-actions { gap: 10px; margin-top: 1.2em !important; }
 .mk-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 22px; border: 0; border-radius: 12px; font: 700 15px/1 inherit; cursor: pointer; transition: transform .15s, box-shadow .2s, filter .2s; }
@@ -56,3 +60,21 @@
 .mk-code::after { content: "Copier"; position: absolute; right: 10px; top: -10px; padding: 2px 9px; border-radius: 99px; background: var(--ac); color: #fff; font: 700 11px/18px inherit; }
 .mk-code.copied::after { content: "Copié ✓"; }
 .mk-code-note { color: var(--mut); font-size: .95rem; }
+
+/* aperçu d'une commande */
+.mk-swal-view .swal2-html-container { max-height: 74vh; }
+.oq { display: grid; gap: 14px; text-align: left; font-size: .93rem; }
+.oq-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+.oq-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.oq-box { border: 1px solid var(--ln); border-radius: 12px; padding: 10px 12px; }
+.oq-box small { display: block; color: var(--mut); font-weight: 600; margin-bottom: 2px; }
+.oq-lines { width: 100%; border-collapse: collapse; }
+.oq-lines th, .oq-lines td { padding: 7px 6px; border-bottom: 1px solid var(--ln); text-align: left; }
+.oq-lines .n { text-align: right; white-space: nowrap; }
+.oq-total { display: grid; gap: 4px; margin-left: auto; min-width: 220px; }
+.oq-total div { display: flex; justify-content: space-between; gap: 18px; }
+.oq-total .g { font-weight: 800; font-size: 1.05rem; border-top: 1px solid var(--ln); padding-top: 6px; }
+.oq-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.oq-actions a { display: inline-flex; align-items: center; min-height: 38px; padding: 0 14px; border-radius: 10px; border: 1.5px solid var(--ln); font-weight: 700; color: var(--fg); text-decoration: none; }
+.oq-actions a.p { background: var(--ac); border-color: var(--ac); color: #fff; }
+@media (max-width: 560px) { .oq-grid { grid-template-columns: 1fr; } }

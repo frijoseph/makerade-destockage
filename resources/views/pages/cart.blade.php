@@ -31,7 +31,7 @@
             <form class="checkout-form" id="checkoutForm" hidden novalidate>
                 <h3>Livraison</h3>
                 <label>Nom complet<input name="name" required autocomplete="name" placeholder="Prénom et nom"></label>
-                <label>Téléphone<input name="phone" type="tel" required autocomplete="tel" placeholder="{{ $shop->contact_phone }}"></label>
+                <label>Téléphone <x-phone-input name="phone" required /></label>
                 <label>Ville<input name="city" required autocomplete="address-level2" value="{{ $shop->default_city }}" list="deliveryCities"></label>
                 <datalist id="deliveryCities">@foreach ($shop->zones() as $zone)<option value="{{ $zone['name'] }}">@endforeach</datalist>
                 <label>Adresse / point de repère<input name="address" required autocomplete="street-address" placeholder="Quartier, rue, repère"></label>

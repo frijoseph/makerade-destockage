@@ -41,7 +41,7 @@ class OrderPlacementTest extends TestCase
         $this->assertSame(7, $soap->fresh()->stock);
         $this->assertSame(3, $powder->fresh()->stock);
         $this->assertSame(2, $order->stockMovements()->where('type', StockMovementType::Sale)->count());
-        $this->assertSame('0701020304', $order->customer->phone);
+        $this->assertSame('+2250701020304', $order->customer->phone);
     }
 
     public function test_free_shipping_applies_above_the_threshold(): void

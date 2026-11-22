@@ -46,7 +46,7 @@
             @forelse ($customers as $customer)
                 <tr data-href="{{ route('admin.customers.show', $customer) }}">
                     <td><div class="thumb" style="min-width: 0"><span class="avatar">{{ $customer->initials() }}</span><span><a href="{{ route('admin.customers.show', $customer) }}" class="strong">{{ $customer->name }}</a><small>{{ $customer->email ?? '—' }}</small></span></div></td>
-                    <td>{{ $customer->phone }}</td>
+                    <td>{{ $shop->phone($customer->phone) }}</td>
                     <td>{{ $customer->city ?? '—' }}</td>
                     <td class="num">{{ $customer->orders_count }}</td>
                     <td class="num strong">{{ Money::format($customer->spent ?? 0) }}</td>

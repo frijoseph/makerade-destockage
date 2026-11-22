@@ -20,7 +20,7 @@
       placeholder: sel.dataset.placeholder || '',
       render: {
         option: (d, e) => `<div class="ts-opt">${iconOf(d)}<span class="ts-txt">${e(d.text)}${hintOf(d)}</span></div>`,
-        item: (d, e) => `<div class="ts-itm">${iconOf(d)}<span>${e(d.text)}</span></div>`,
+        item: (d, e) => `<div class="ts-itm">${iconOf(d)}<span>${e(d.$option?.dataset?.short || d.text)}</span></div>`,
         no_results: () => '<div class="no-results">Aucun résultat</div>',
       },
     });

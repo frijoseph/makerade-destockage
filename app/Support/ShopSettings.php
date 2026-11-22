@@ -27,6 +27,46 @@ class ShopSettings
         return SettingsSchema::field($key) !== null;
     }
 
+    /**
+     * Public configuration of the chat widget (null when the assistant is off). Never includes the API key.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function assistantConfig(): ?array
+    {
+        if (! Setting::get('ai_enabled')) {
+            return null;
+        }
+
+        return [
+            'endpoint' => route('assistant.message'),
+            'name' => Setting::interpolate((string) Setting::get('ai_name')),
+            'title' => Setting::interpolate((string) Setting::get('ai_title')),
+            'avatar' => Setting::imageUrl(Setting::get('ai_avatar')),
+            'label' => Setting::interpolate((string) Setting::get('ai_launcher_label')),
+            'position' => Setting::get('ai_position') === 'left' ? 'left' : 'right',
+            'welcome' => Setting::interpolate((string) Setting::get('ai_welcome')),
+            'suggestions' => collect((array) Setting::get('ai_suggestions'))->pluck('text')->filter()->values()->all(),
+            'handoff' => Setting::get('ai_handoff_enabled') && Setting::get('whatsapp_number')
+                ? ['label' => Setting::interpolate((string) Setting::get('ai_handoff_label')), 'url' => 'https://wa.me/'.Setting::get('whatsapp_number').'?text='.rawurlencode(Setting::interpolate((string) Setting::get('whatsapp_message')))]
+                : null,
+        ];
+    }
+
+    /**
+     * CSS variables derived from the primary colour, injected after the stylesheets.
+     */
+    public function primaryCss(): string
+    {
+        $color = (string) Setting::get('theme_color');
+
+        if (! preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
+            return '';
+        }
+
+        return ":root{--g:{$color};--g-d:color-mix(in srgb,{$color} 78%,#000);--g-2:color-mix(in srgb,{$color} 88%,#fff);--g-l:color-mix(in srgb,{$color} 12%,#fff);--g-xl:color-mix(in srgb,{$color} 6%,#fff);--primary:{$color}}";
+    }
+
     public function text(string $key): string
     {
         return Setting::interpolate((string) Setting::get($key));
@@ -55,6 +95,11 @@ class ShopSettings
     public function money(float|int|string|null $amount): string
     {
         return Money::format($amount);
+    }
+
+    public function phone(?string $e164): string
+    {
+        return Phone::format($e164);
     }
 
     public function number(float|int $value): string
@@ -130,7 +175,13 @@ class ShopSettings
             ->values()
             ->all();
 
-        return $links ?: array_map(fn (array $category): array => ['label' => $category['name'], 'url' => route('shop', ['cat' => $category['slug']])], Catalog::categories());
+        $links = $links ?: array_map(fn (array $category): array => ['label' => $category['name'], 'url' => route('shop', ['cat' => $category['slug']])], Catalog::categories());
+
+        if (Setting::get('all_products_link_enabled') && ($label = trim((string) Setting::get('all_products_link_label'))) !== '') {
+            array_unshift($links, ['label' => Setting::interpolate($label), 'url' => route('shop')]);
+        }
+
+        return $links;
     }
 
     /**
@@ -174,8 +225,14 @@ class ShopSettings
 
         return [
             'money' => Money::config(),
+            'primary' => (string) Setting::get('theme_color'),
+            'assistant' => $this->assistantConfig(),
             'shipping' => ['fee' => (float) Setting::get('shipping_fee'), 'freeFrom' => (float) Setting::get('free_shipping_threshold')],
             'zones' => $this->zones(),
+            'phone' => [
+                'default' => Phone::defaultIso(),
+                'countries' => collect(Phone::countries())->map(fn (array $country, string $iso): array => ['iso' => $iso] + $country)->values()->all(),
+            ],
             'recentSales' => Catalog::recentSales(),
             'popups' => Popup::forStorefront(Route::currentRouteName()),
             'confetti' => (bool) Setting::get('confetti_enabled'),

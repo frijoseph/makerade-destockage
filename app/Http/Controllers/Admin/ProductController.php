@@ -10,18 +10,30 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\StockMovementType;
 use App\Support\Inventory;
+use App\Support\ProductVariants;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ProductController extends Controller
 {
+    /**
+     * Request fields that are not columns of the products table.
+     *
+     * @var list<string>
+     */
+    private const NON_COLUMN_FIELDS = ['image', 'remove_image', 'stock', 'gallery', 'remove_gallery', 'promote_image', 'variants'];
+
+    private const MAX_GALLERY = 12;
+
     public function index(Request $request): View
     {
         $products = Product::query()
             ->with(['category', 'brand'])
+            ->withCount('variants')
             ->when($request->query('q'), fn ($query, $search) => $query->where(fn ($query) => $query
                 ->where('name', 'like', "%{$search}%")
                 ->orWhere('sku', 'like', "%{$search}%")
@@ -70,15 +82,18 @@ class ProductController extends Controller
 
     public function store(ProductRequest $request): RedirectResponse
     {
-        $data = $request->safe()->except(['image', 'remove_image', 'stock']);
-        $initialStock = (int) $request->validated('stock');
+        $data = $request->safe()->except(self::NON_COLUMN_FIELDS);
+        $variants = (array) $request->validated('variants', []);
+        $initialStock = $variants === [] ? (int) $request->validated('stock') : 0;
 
-        $product = DB::transaction(function () use ($request, $data, $initialStock): Product {
+        $product = DB::transaction(function () use ($request, $data, $initialStock, $variants): Product {
             $product = Product::query()->create($data + ['stock' => 0]);
 
             if ($request->hasFile('image')) {
                 $product->update(['image' => $request->file('image')->store('products', 'public')]);
             }
+
+            $this->saveExtras($request, $product, $variants);
 
             if ($initialStock > 0) {
                 Inventory::move($product, StockMovementType::Restock, $initialStock, 'Stock initial', user: $request->user());
@@ -97,14 +112,17 @@ class ProductController extends Controller
 
     public function update(ProductRequest $request, Product $product): RedirectResponse
     {
-        $data = $request->safe()->except(['image', 'remove_image', 'stock']);
+        $data = $request->safe()->except(self::NON_COLUMN_FIELDS);
 
         if ($request->boolean('remove_image') || $request->hasFile('image')) {
             $this->deleteImage($product);
             $data['image'] = $request->hasFile('image') ? $request->file('image')->store('products', 'public') : null;
         }
 
-        $product->update($data);
+        DB::transaction(function () use ($request, $product, $data): void {
+            $product->update($data);
+            $this->saveExtras($request, $product, (array) $request->validated('variants', []));
+        });
 
         return redirect()->route('admin.products.index')->with('status', "Produit « {$product->name} » mis à jour.");
     }
@@ -117,10 +135,32 @@ class ProductController extends Controller
             return back()->with('status', "« {$product->name} » a déjà été commandé : il a été désactivé au lieu d’être supprimé.");
         }
 
-        $this->deleteImage($product);
+        ProductVariants::deleteMedia($product);
         $product->delete();
 
         return back()->with('status', "Produit « {$product->name} » supprimé.");
+    }
+
+    /**
+     * Gallery photos and variants, saved with the product.
+     *
+     * @param  array<int, array<string, mixed>>  $variants
+     */
+    private function saveExtras(ProductRequest $request, Product $product, array $variants): void
+    {
+        $uploads = array_values((array) $request->file('gallery', []));
+        $removals = (array) $request->validated('remove_gallery', []);
+        $remaining = $product->images()->whereNotIn('id', $removals)->count() + count($uploads);
+
+        if ($remaining > self::MAX_GALLERY) {
+            throw ValidationException::withMessages(['gallery' => 'La galerie est limitée à '.self::MAX_GALLERY.' photos secondaires.']);
+        }
+
+        ProductVariants::syncGallery($product, $uploads, $removals, $request->integer('promote_image') ?: null);
+
+        if ($variants !== [] || $product->variants()->exists()) {
+            ProductVariants::sync($product, $variants, $request->user());
+        }
     }
 
     /**
@@ -128,6 +168,10 @@ class ProductController extends Controller
      */
     private function formData(Product $product): array
     {
+        if ($product->exists) {
+            $product->load(['images', 'variants']);
+        }
+
         return [
             'product' => $product,
             'categories' => Category::query()->orderBy('position')->get(),

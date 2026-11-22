@@ -4,7 +4,8 @@
     <div class="container newsband-in">
         <div class="nb-txt"><h3>{{ $shop->text('newsletter_title') }}</h3><p>{{ $shop->text('newsletter_text') }}</p></div>
         <form class="news-form" id="newsForm" novalidate>
-            <input type="email" name="email" id="newsEmail" placeholder="Entrez votre adresse e-mail" aria-label="Adresse e-mail" required>
+            <x-phone-input name="phone" id="newsPhone" required />
+            <input type="text" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true">
             <button class="nb-btn">S'abonner <x-icon name="arrow-right" :size="15" :stroke="2.2" /></button>
         </form>
     </div>

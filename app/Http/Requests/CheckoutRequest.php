@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\NormalizesPhone;
 use App\Models\DeliveryZone;
 use App\Models\Setting;
 use App\PaymentMethod;
@@ -12,12 +13,19 @@ use Illuminate\Validation\Rule;
 
 class CheckoutRequest extends FormRequest
 {
+    use NormalizesPhone;
+
     /**
      * Anyone can order from the storefront.
      */
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->normalizePhoneInput();
     }
 
     /**
@@ -27,7 +35,7 @@ class CheckoutRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'regex:/^\+?[\d\s().-]{8,20}$/'],
+            'phone' => ['required', 'string', 'regex:/^\+\d{8,15}$/'],
             'email' => ['nullable', 'email', 'max:255'],
             'city' => ['required', 'string', 'max:80', function (string $attribute, mixed $value, Closure $fail): void {
                 if (Setting::get('restrict_to_zones') && DeliveryZone::query()->active()->exists() && ! DeliveryZone::forCity((string) $value)) {

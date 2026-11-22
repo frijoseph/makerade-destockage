@@ -32,17 +32,61 @@ class Catalog
     public static function brands(): array
     {
         return once(fn (): array => self::fromDb('brands', fn (): array => Brand::query()->active()
-            ->orderBy('id')->get()
+            ->orderBy('position')->orderBy('id')->get()
             ->map(fn (Brand $brand): array => $brand->toCatalogArray())->all()) ?? self::seedBrands());
+    }
+
+    /**
+     * Brands shown in the home trust band: featured ones only, capped by the settings.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function featuredBrands(): array
+    {
+        $brands = array_values(array_filter(self::brands(), fn (array $brand): bool => $brand['featured'] ?? true));
+        $limit = (int) Setting::get('brands_limit');
+
+        return $limit > 0 ? array_slice($brands, 0, $limit) : $brands;
     }
 
     public static function products(): array
     {
         return once(fn (): array => self::fromDb('products', fn (): array => Product::query()->active()
-            ->with(['brand', 'category'])
+            ->with(['brand', 'category', 'images', 'variants'])
             ->withSum(['orderItems as sold' => fn ($query) => $query->whereHas('order', fn ($query) => $query->billable())], 'quantity')
             ->orderBy('id')->get()
             ->map(fn (Product $product): array => $product->toCatalogArray())->all()) ?? self::withImage(self::seedProducts()));
+    }
+
+    /**
+     * Catalogue embedded in every page for the cart scripts, keyed by cart key: the product slug, plus
+     * one virtual entry « slug~variantId » per variant (own price, stock, picture, label).
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function clientCatalog(): array
+    {
+        $catalog = [];
+
+        foreach (self::products() as $product) {
+            $catalog[$product['slug']] = $product;
+
+            foreach ($product['variants'] ?? [] as $variant) {
+                $catalog[$product['slug'].'~'.$variant['id']] = array_merge($product, [
+                    'base' => $product['slug'],
+                    'virtual' => true,
+                    'variant' => trim($product['variant'].' · '.$variant['name'], ' ·'),
+                    'price' => $variant['price'],
+                    'old_price' => $variant['old_price'],
+                    'off' => $variant['old_price'] ? (int) round((1 - $variant['price'] / $variant['old_price']) * 100) : 0,
+                    'stock' => $variant['stock'],
+                    'image' => $variant['image'] ?: ($product['image'] ?? null),
+                ]);
+                unset($catalog[$product['slug'].'~'.$variant['id']]['variants'], $catalog[$product['slug'].'~'.$variant['id']]['images']);
+            }
+        }
+
+        return $catalog;
     }
 
     public static function product(string $slug): ?array

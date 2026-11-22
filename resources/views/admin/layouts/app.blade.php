@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/admin-ui.css') }}?v={{ filemtime(public_path('css/admin-ui.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/notify.css') }}?v={{ filemtime(public_path('css/notify.css')) }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.default.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.default.min.css" integrity="sha384-86bgzEpZNdMv4V0h2BgSxQUadlX29O0I89TbSGZ4gFkGtpN8U+KAGcuDbqMdbl/M" crossorigin="anonymous">
     <link rel="stylesheet" href="{{ asset('css/selects.css') }}?v={{ filemtime(public_path('css/selects.css')) }}">
     <script>try{var t=localStorage.getItem('mk_admin_theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 </head>
@@ -38,6 +38,7 @@
             ['admin.coupons.index', 'admin.coupons.*', 'percent', 'Codes promo', null],
             ['admin.popups.index', 'admin.popups.*', 'gift', 'Popups & roue', null],
             ['admin.messages.index', 'admin.messages.*|admin.subscribers.*', 'mail', 'Messages', $unreadMessages ?: null],
+            ['admin.assistant.index', 'admin.assistant.*', 'sparkles', 'Assistant IA', null],
             ['admin.pages.index', 'admin.pages.*', 'edit', 'Pages & blog', null],
         ]],
     ];
@@ -146,8 +147,8 @@
 ])), JSON_HEX_TAG | JSON_UNESCAPED_UNICODE) !!}</script>
 
 @include('partials.flash', ['showErrors' => true])
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js" integrity="sha384-YB/DdIkloKoRpclWB8bNcYXWakt57USgtQPDzvnIDHYU0lasD5eWlXVo1S4ODukY" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js" integrity="sha384-cnROoUgVILyibe3J0zhzWoJ9p2WmdnK7j/BOTSWqVDbC1pVw2d+i6Q/1ESKJKCYf" crossorigin="anonymous"></script>
 <script src="{{ asset('js/notify.js') }}?v={{ filemtime(public_path('js/notify.js')) }}"></script>
 <script src="{{ asset('js/selects.js') }}?v={{ filemtime(public_path('js/selects.js')) }}" defer></script>
 <script src="{{ asset('js/admin.js') }}?v={{ filemtime(public_path('js/admin.js')) }}" defer></script>

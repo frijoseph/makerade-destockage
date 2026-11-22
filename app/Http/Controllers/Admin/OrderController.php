@@ -64,7 +64,7 @@ class OrderController extends Controller
     public function create(): View
     {
         return view('admin.orders.create', [
-            'products' => Product::query()->active()->with('brand')->orderBy('name')->get(),
+            'products' => Product::query()->active()->with(['brand', 'variants'])->orderBy('name')->get(),
         ]);
     }
 
@@ -95,6 +95,34 @@ class OrderController extends Controller
         $order->load(['customer', 'items.product', 'stockMovements']);
 
         return view('admin.orders.show', compact('order'));
+    }
+
+    /**
+     * Compact order summary shown in a modal from the orders list.
+     */
+    public function preview(Order $order): View
+    {
+        $order->load(['customer', 'items']);
+
+        return view('admin.orders.partials.quick', compact('order'));
+    }
+
+    /**
+     * Printable delivery note, receipt or thermal ticket.
+     */
+    public function print(Request $request, Order $order, string $document): View
+    {
+        $order->load(['customer', 'items']);
+
+        return view('documents.order', [
+            'order' => $order,
+            'mode' => $document,
+            'auto' => $request->boolean('auto'),
+            'back' => route('admin.orders.show', $order),
+            'switch' => collect(['delivery' => 'Bon de livraison', 'receipt' => 'Reçu', 'ticket' => 'Ticket'])
+                ->map(fn (string $label, string $key): array => ['label' => $label, 'url' => route('admin.orders.print', [$order, $key]), 'on' => $key === $document])
+                ->values()->all(),
+        ]);
     }
 
     public function updateStatus(Request $request, Order $order): RedirectResponse

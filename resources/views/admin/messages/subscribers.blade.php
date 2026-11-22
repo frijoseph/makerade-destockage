@@ -16,12 +16,12 @@
 <section class="card">
     <div class="table-wrap">
         <table class="table" data-smart>
-            <thead><tr><th data-sort>E-mail</th><th data-sort>Inscrit le</th></tr></thead>
+            <thead><tr><th data-sort>Téléphone</th><th data-sort>E-mail</th><th data-sort>Inscrit le</th></tr></thead>
             <tbody>
             @forelse ($subscribers as $subscriber)
-                <tr><td><a href="mailto:{{ $subscriber->email }}">{{ $subscriber->email }}</a></td><td>{{ $subscriber->created_at->translatedFormat('j M Y') }}</td></tr>
+                <tr><td>@if ($subscriber->phone)<a href="tel:{{ $subscriber->phone }}">{{ $shop->phone($subscriber->phone) }}</a>@else — @endif</td><td>@if ($subscriber->email)<a href="mailto:{{ $subscriber->email }}">{{ $subscriber->email }}</a>@else — @endif</td><td>{{ $subscriber->created_at->translatedFormat('j M Y') }}</td></tr>
             @empty
-                <tr><td colspan="2" class="empty">Aucun abonné pour l’instant.</td></tr>
+                <tr><td colspan="3" class="empty">Aucun abonné pour l’instant.</td></tr>
             @endforelse
             </tbody>
         </table>

@@ -16,6 +16,17 @@ return [
     // Read the storefront catalogue from MySQL instead of the bundled data.
     'catalog_from_db' => (bool) env('CATALOG_USE_DB', false),
 
+    // Hardening: Content-Security-Policy (set SECURITY_CSP=false to disable it while debugging) and HSTS over HTTPS.
+    'security' => [
+        'csp' => (bool) env('SECURITY_CSP', true),
+        'hsts' => (bool) env('SECURITY_HSTS', true),
+    ],
+
+    // Assistant IA : clé API de secours (utilisée si aucune clé n'est saisie dans l'administration).
+    'ai' => [
+        'api_key' => env('AI_API_KEY'),
+    ],
+
     // First back-office account, created by AdminUserSeeder (php artisan db:seed).
     'admin' => [
         'name' => env('ADMIN_NAME', 'Administrateur'),

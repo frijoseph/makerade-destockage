@@ -11,13 +11,15 @@
 <section class="card">
     <div class="table-wrap">
         <table class="table" data-smart>
-            <thead><tr><th data-sort>Marque</th><th data-filter>Style du logo</th><th class="num" data-sort>Produits</th><th data-filter>Visibilité</th><th class="actions"><span class="sr-only">Actions</span></th></tr></thead>
+            <thead><tr><th data-sort>Marque</th><th data-filter>Style du logo</th><th class="num" data-sort>Produits</th><th class="num" data-sort>Ordre</th><th data-filter>Accueil</th><th data-filter>Visibilité</th><th class="actions"><span class="sr-only">Actions</span></th></tr></thead>
             <tbody>
             @forelse ($brands as $brand)
                 <tr data-href="{{ route('admin.brands.edit', $brand) }}">
                     <td><span class="swatch" style="background: {{ $brand->color }}"></span><a href="{{ route('admin.brands.edit', $brand) }}" class="strong">{{ $brand->name }}</a></td>
                     <td>{{ $brand->style }}</td>
                     <td class="num">{{ $brand->products_count }}</td>
+                    <td class="num">{{ $brand->position }}</td>
+                    <td>{{ $brand->is_featured ? 'Mise en avant' : '—' }}</td>
                     <td>@if ($brand->is_active)<x-admin.badge tone="green">En ligne</x-admin.badge>@else<x-admin.badge tone="slate">Masquée</x-admin.badge>@endif</td>
                     <td class="actions">
                         <a href="{{ route('admin.brands.edit', $brand) }}" class="icon-btn" aria-label="Modifier {{ $brand->name }}"><x-admin.icon name="edit" :size="17" /></a>
@@ -28,7 +30,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="5" class="empty">Aucune marque.</td></tr>
+                <tr><td colspan="7" class="empty">Aucune marque.</td></tr>
             @endforelse
             </tbody>
         </table>

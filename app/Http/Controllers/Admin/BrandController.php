@@ -13,13 +13,13 @@ class BrandController extends Controller
     public function index(): View
     {
         return view('admin.brands.index', [
-            'brands' => Brand::query()->withCount('products')->orderBy('name')->get(),
+            'brands' => Brand::query()->withCount('products')->orderBy('position')->orderBy('name')->get(),
         ]);
     }
 
     public function create(): View
     {
-        return view('admin.brands.form', ['brand' => new Brand(['is_active' => true, 'color' => '#2a2a2a', 'style' => 'plain'])]);
+        return view('admin.brands.form', ['brand' => new Brand(['is_active' => true, 'is_featured' => true, 'position' => 0, 'color' => '#2a2a2a', 'style' => 'plain'])]);
     }
 
     public function store(BrandRequest $request): RedirectResponse

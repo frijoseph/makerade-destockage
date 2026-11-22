@@ -5,6 +5,8 @@
 @section('heading', 'Produits')
 @section('subheading', 'Votre catalogue : prix, remises, visibilité et niveau de stock.')
 @section('actions')
+    <a href="{{ route('admin.products.export') }}" class="btn"><x-admin.icon name="copy" :size="17" /> Exporter (Excel)</a>
+    <a href="{{ route('admin.products.import') }}" class="btn"><x-admin.icon name="plus" :size="17" /> Importer (Excel)</a>
     <a href="{{ route('admin.products.create') }}" class="btn btn-primary"><x-admin.icon name="plus" :size="18" :stroke="2.4" /> Nouveau produit</a>
 @endsection
 
@@ -67,7 +69,7 @@
                     <td>
                         <div class="thumb">
                             @if ($product->image_url)<img src="{{ $product->image_url }}" alt="" loading="lazy">@else<span class="ph" style="background: {{ $product->c1 }}22"><x-admin.icon name="box" :size="18" /></span>@endif
-                            <span><a href="{{ route('admin.products.edit', $product) }}" class="strong">{{ $product->name }}</a><small>{{ $product->variant }} · {{ $product->sku }}</small></span>
+                            <span><a href="{{ route('admin.products.edit', $product) }}" class="strong">{{ $product->name }}</a><small>{{ $product->variant }} · {{ $product->sku }}@if ($product->variants_count) · {{ $product->variants_count }} variante(s)@endif</small></span>
                         </div>
                     </td>
                     <td>{{ $product->category->name }}</td>

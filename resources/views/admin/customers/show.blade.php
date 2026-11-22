@@ -44,7 +44,7 @@
             <span class="avatar">{{ $customer->initials() }}</span>
             <div><h2>{{ $customer->name }}</h2><small class="muted">{{ $customer->city ?? 'Ville inconnue' }}</small></div>
         </div>
-        <p class="contact-line"><x-admin.icon name="phone" :size="16" /> <a href="tel:{{ $customer->phone }}">{{ $customer->phone }}</a></p>
+        <p class="contact-line"><x-admin.icon name="phone" :size="16" /> <a href="tel:{{ $customer->phone }}">{{ $shop->phone($customer->phone) }}</a></p>
         <p class="contact-line"><x-admin.icon name="whatsapp" :size="16" /> <a href="https://wa.me/{{ preg_replace('/\D/', '', $customer->phone) }}" target="_blank" rel="noopener">Écrire sur WhatsApp</a></p>
         @if ($customer->email)<p class="contact-line"><x-admin.icon name="mail" :size="16" /> <a href="mailto:{{ $customer->email }}">{{ $customer->email }}</a></p>@endif
         <p class="contact-line"><x-admin.icon name="pin" :size="16" /> <span>{{ $customer->address ?? 'Adresse non renseignée' }}</span></p>

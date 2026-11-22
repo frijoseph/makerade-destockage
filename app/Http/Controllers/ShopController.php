@@ -16,7 +16,7 @@ class ShopController extends Controller
             'categories' => Catalog::categories(),
             'featured' => array_slice(Catalog::products(), 0, (int) Setting::get('featured_count')),
             'flash' => array_slice(collect(Catalog::deals())->sortByDesc('off')->values()->all(), 0, (int) Setting::get('flash_count')),
-            'brands' => Catalog::brands(),
+            'brands' => Setting::get('brands_enabled') ? Catalog::featuredBrands() : [],
         ]);
     }
 

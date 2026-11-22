@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['order_id', 'product_id', 'product_name', 'sku', 'unit_price', 'quantity', 'line_total'])]
+#[Fillable(['order_id', 'product_id', 'variant_id', 'variant_name', 'product_name', 'sku', 'unit_price', 'quantity', 'line_total'])]
 class OrderItem extends Model
 {
     /**
@@ -35,5 +35,13 @@ class OrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * @return BelongsTo<ProductVariant, $this>
+     */
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
 }
