@@ -56,6 +56,16 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') set(false); });
   }
 
+  /* ---------- menu du profil (profil + déconnexion) ---------- */
+  const userMenu = $('[data-usermenu]');
+  if (userMenu) {
+    const btn = $('[data-usermenu-toggle]', userMenu), panel = $('.user-panel', userMenu);
+    const set = open => { panel.hidden = !open; btn.setAttribute('aria-expanded', open); };
+    btn.addEventListener('click', e => { e.stopPropagation(); set(panel.hidden); });
+    document.addEventListener('click', e => { if (!userMenu.contains(e.target)) set(false); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') set(false); });
+  }
+
   /* ---------- palette de commandes (Ctrl+K) ---------- */
   const cmdk = $('#cmdk');
   if (cmdk) {

@@ -113,13 +113,20 @@
                     @endforelse
                 </div>
             </div>
-            <div class="top-user">
-                <span class="avatar">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</span>
-                <span class="top-user-name"><b>{{ $user->name }}</b><small>{{ $user->role->label() }}</small></span>
-                <form method="POST" action="{{ route('admin.logout') }}" data-confirm="Vous allez être déconnecté de l’administration." data-confirm-title="Se déconnecter ?" data-confirm-button="Me déconnecter">
-                    @csrf
-                    <button class="icon-btn" title="Déconnexion" aria-label="Déconnexion"><x-admin.icon name="logout" :size="18" /></button>
-                </form>
+            <div class="top-user" data-usermenu>
+                <button type="button" class="top-user-link" data-usermenu-toggle aria-haspopup="true" aria-expanded="false" aria-label="Menu du profil ({{ $user->name }})">
+                    <span class="avatar">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</span>
+                    <span class="top-user-name"><b>{{ $user->name }}</b><small>{{ $user->role->label() }}</small></span>
+                    <x-admin.icon name="chev-down" :size="16" />
+                </button>
+                <div class="user-panel" role="menu" hidden>
+                    <div class="user-panel-head"><b>{{ $user->name }}</b><small>{{ $user->email }}</small></div>
+                    <a href="{{ route('admin.profile.edit') }}" role="menuitem"><x-admin.icon name="users" :size="18" /> Mon profil</a>
+                    <form method="POST" action="{{ route('admin.logout') }}" data-confirm="Vous allez être déconnecté de l’administration." data-confirm-title="Se déconnecter ?" data-confirm-button="Me déconnecter">
+                        @csrf
+                        <button role="menuitem" class="user-logout"><x-admin.icon name="logout" :size="18" /> Déconnexion</button>
+                    </form>
+                </div>
             </div>
         </div>
     </header>

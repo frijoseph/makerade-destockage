@@ -70,6 +70,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', Admin\DashboardController::class)->name('dashboard');
         Route::get('/search', Admin\SearchController::class)->name('search');
 
+        Route::get('/profile', [Admin\ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile', [Admin\ProfileController::class, 'update'])->name('profile.update');
+        Route::put('/profile/password', [Admin\ProfileController::class, 'password'])->middleware('throttle:6,1')->name('profile.password');
+
         Route::get('/orders', [Admin\OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/create', [Admin\OrderController::class, 'create'])->name('orders.create');
         Route::post('/orders', [Admin\OrderController::class, 'store'])->name('orders.store');
