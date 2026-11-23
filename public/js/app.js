@@ -316,7 +316,8 @@
   coBtn?.addEventListener('click', () => {
     if (!store.count()) return toast('Votre panier est vide.', null, 'error');
     if (!SHOP.endpoints?.checkout || !coForm) return toast('La commande en ligne n’est pas disponible sur cette version du site.', null, 'error');
-    coBtn.hidden = true; coForm.hidden = false; $('input', coForm).focus(); renderTotals(); queuePreview();
+    coBtn.hidden = true; coForm.hidden = false; renderTotals(); queuePreview();
+    coForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => $('input', coForm).focus({ preventScroll: true }), 350);
   });
   coForm?.addEventListener('submit', async e => {
     e.preventDefault();

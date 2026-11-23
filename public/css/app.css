@@ -368,6 +368,7 @@ body.menu-open{overflow:hidden}
 .prose{max-width:760px;margin:auto;display:grid;gap:12px}.prose h3{margin-top:14px}.prose p{color:#46524a}.prose a{color:var(--g);font-weight:600}
 
 .cart-wrap{display:grid;grid-template-columns:1fr 360px;gap:28px;align-items:start}
+.cart-main{display:grid;gap:22px;min-width:0}
 .cart-list{display:grid;gap:14px}
 .citem{display:grid;grid-template-columns:90px 1fr auto;gap:18px;align-items:center;padding:14px 18px;border:1px solid var(--line);border-radius:14px;background:#fff;animation:up .5s var(--ease) both;transition:.3s}
 .citem:hover{box-shadow:var(--sh-s)}

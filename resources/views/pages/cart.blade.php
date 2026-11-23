@@ -6,28 +6,8 @@
 @include('partials.page-head')
 <section class="container section tight">
     <div class="cart-wrap">
-        <div class="cart-list" id="cartList"></div>
-        <aside class="summary reveal" id="cartSummary">
-            <h3>Récapitulatif</h3>
-            <div class="srow"><span>Sous-total</span><b data-sub>{{ $shop->money(0) }}</b></div>
-            <div class="srow"><span>Livraison</span><b data-ship>{{ $shop->money(0) }}</b></div>
-            <div class="srow disc" data-discount-row hidden><span data-discount-label>Réduction</span><b data-discount>—</b></div>
-            <div class="ship-bar"><i id="shipBar"></i></div>
-            <p class="ship-note" id="shipNote"></p>
-            <p class="zone-info" id="zoneInfo"></p>
-            <div class="promo-box" id="promoBox">
-                <button type="button" class="promo-toggle" id="promoToggle"><x-icon name="percent" :size="16" :stroke="2" /> J’ai un code promo</button>
-                <form class="promo-form" id="promoForm" hidden>
-                    <input id="promoInput" placeholder="VOTRE CODE" autocomplete="off" autocapitalize="characters" aria-label="Code promo">
-                    <button class="btn btn-primary">Appliquer</button>
-                </form>
-                <div class="promo-applied" id="promoApplied" hidden>
-                    <span class="promo-chip"><x-icon name="tag" :size="15" :stroke="2" /><b data-promo-code></b><small data-promo-benefit></small></span>
-                    <button type="button" id="promoRemove" aria-label="Retirer le code">×</button>
-                </div>
-            </div>
-            <div class="srow total"><span>Total</span><b data-grand>{{ $shop->money(0) }}</b></div>
-            <button class="btn btn-primary btn-lg block" id="checkout">Passer la commande</button>
+        <div class="cart-main">
+            <div class="cart-list" id="cartList"></div>
             <form class="checkout-form" id="checkoutForm" hidden novalidate>
                 <h3>Livraison</h3>
                 <label>Nom complet<input name="name" required autocomplete="name" placeholder="Prénom et nom"></label>
@@ -51,6 +31,28 @@
                 <p class="checkout-err" id="checkoutErr" role="alert" hidden></p>
                 <button class="btn btn-primary btn-lg block" id="checkoutSubmit">Confirmer la commande</button>
             </form>
+        </div>
+        <aside class="summary reveal" id="cartSummary">
+            <h3>Récapitulatif</h3>
+            <div class="srow"><span>Sous-total</span><b data-sub>{{ $shop->money(0) }}</b></div>
+            <div class="srow"><span>Livraison</span><b data-ship>{{ $shop->money(0) }}</b></div>
+            <div class="srow disc" data-discount-row hidden><span data-discount-label>Réduction</span><b data-discount>—</b></div>
+            <div class="ship-bar"><i id="shipBar"></i></div>
+            <p class="ship-note" id="shipNote"></p>
+            <p class="zone-info" id="zoneInfo"></p>
+            <div class="promo-box" id="promoBox">
+                <button type="button" class="promo-toggle" id="promoToggle"><x-icon name="percent" :size="16" :stroke="2" /> J’ai un code promo</button>
+                <form class="promo-form" id="promoForm" hidden>
+                    <input id="promoInput" placeholder="VOTRE CODE" autocomplete="off" autocapitalize="characters" aria-label="Code promo">
+                    <button class="btn btn-primary">Appliquer</button>
+                </form>
+                <div class="promo-applied" id="promoApplied" hidden>
+                    <span class="promo-chip"><x-icon name="tag" :size="15" :stroke="2" /><b data-promo-code></b><small data-promo-benefit></small></span>
+                    <button type="button" id="promoRemove" aria-label="Retirer le code">×</button>
+                </div>
+            </div>
+            <div class="srow total"><span>Total</span><b data-grand>{{ $shop->money(0) }}</b></div>
+            <button class="btn btn-primary btn-lg block" id="checkout">Passer la commande</button>
             <a href="{{ route('shop') }}" class="btn btn-ghost block">Continuer mes achats</a>
         </aside>
     </div>
