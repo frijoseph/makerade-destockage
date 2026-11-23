@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ProductRequest;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\MediaFile;
 use App\Models\Product;
 use App\Models\Setting;
 use App\StockMovementType;
 use App\Support\Inventory;
+use App\Support\Media\MediaLibrary;
 use App\Support\ProductVariants;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +27,7 @@ class ProductController extends Controller
      *
      * @var list<string>
      */
-    private const NON_COLUMN_FIELDS = ['image', 'remove_image', 'stock', 'gallery', 'remove_gallery', 'promote_image', 'variants'];
+    private const NON_COLUMN_FIELDS = ['image_media_id', 'gallery_media_ids', 'image', 'remove_image', 'stock', 'gallery', 'remove_gallery', 'promote_image', 'variants'];
 
     private const MAX_GALLERY = 12;
 
@@ -90,7 +92,9 @@ class ProductController extends Controller
             $product = Product::query()->create($data + ['stock' => 0]);
 
             if ($request->hasFile('image')) {
-                $product->update(['image' => $request->file('image')->store('products', 'public')]);
+                $product->update(['image' => MediaLibrary::storeForProduct($request->file('image'), $product)]);
+            } elseif ($media = $this->pickedImage($request)) {
+                $product->update(['image' => $media->path]);
             }
 
             $this->saveExtras($request, $product, $variants);
@@ -114,9 +118,15 @@ class ProductController extends Controller
     {
         $data = $request->safe()->except(self::NON_COLUMN_FIELDS);
 
-        if ($request->boolean('remove_image') || $request->hasFile('image')) {
+        $picked = $this->pickedImage($request);
+
+        if ($request->boolean('remove_image') || $request->hasFile('image') || $picked) {
             $this->deleteImage($product);
-            $data['image'] = $request->hasFile('image') ? $request->file('image')->store('products', 'public') : null;
+            $data['image'] = match (true) {
+                $request->hasFile('image') => MediaLibrary::storeForProduct($request->file('image'), $product),
+                $picked !== null => $picked->path,
+                default => null,
+            };
         }
 
         DB::transaction(function () use ($request, $product, $data): void {
@@ -150,13 +160,14 @@ class ProductController extends Controller
     {
         $uploads = array_values((array) $request->file('gallery', []));
         $removals = (array) $request->validated('remove_gallery', []);
-        $remaining = $product->images()->whereNotIn('id', $removals)->count() + count($uploads);
+        $mediaPaths = MediaFile::query()->whereIn('id', (array) $request->validated('gallery_media_ids', []))->pluck('path')->all();
+        $remaining = $product->images()->whereNotIn('id', $removals)->count() + count($uploads) + count($mediaPaths);
 
         if ($remaining > self::MAX_GALLERY) {
             throw ValidationException::withMessages(['gallery' => 'La galerie est limitée à '.self::MAX_GALLERY.' photos secondaires.']);
         }
 
-        ProductVariants::syncGallery($product, $uploads, $removals, $request->integer('promote_image') ?: null);
+        ProductVariants::syncGallery($product, $uploads, $removals, $request->integer('promote_image') ?: null, $mediaPaths);
 
         if ($variants !== [] || $product->variants()->exists()) {
             ProductVariants::sync($product, $variants, $request->user());
@@ -188,9 +199,17 @@ class ProductController extends Controller
         return $prefix.str_pad((string) $sequence, 5, '0', STR_PAD_LEFT);
     }
 
+    private function pickedImage(ProductRequest $request): ?MediaFile
+    {
+        return $request->filled('image_media_id') ? MediaFile::query()->find($request->integer('image_media_id')) : null;
+    }
+
+    /**
+     * Files of the media library are never deleted with a product: they belong to the library.
+     */
     private function deleteImage(Product $product): void
     {
-        if ($product->image) {
+        if ($product->image && ! MediaLibrary::isInLibrary($product->image)) {
             Storage::disk('public')->delete($product->image);
         }
     }

@@ -13,6 +13,8 @@
 @endsection
 
 @push('scripts')
+    <script>window.MK_MEDIA = { browse: @json(route('admin.media.browse')) };</script>
+    <script src="{{ asset('js/admin-media.js') }}?v={{ filemtime(public_path('js/admin-media.js')) }}" defer></script>
     <script src="{{ asset('js/admin-variants.js') }}?v={{ filemtime(public_path('js/admin-variants.js')) }}" defer></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -123,6 +125,9 @@
             </div>
             <div class="form" style="margin-top: 14px">
                 <input type="file" name="image" accept="image/jpeg,image/png,image/webp" data-image-input="#imgPreview" aria-label="Photo du produit">
+                <input type="hidden" name="image_media_id" value="" data-media-main-id>
+                <button type="button" class="btn media-pick-btn" data-media-pick-main><x-admin.icon name="folder" :size="17" /> Choisir dans la médiathèque</button>
+                <small class="muted">Les photos envoyées sont compressées et rangées automatiquement dans la médiathèque.</small>
                 @if ($product->image)
                     <label class="check"><input type="checkbox" name="remove_image" value="1"> Supprimer la photo</label>
                 @endif
@@ -147,6 +152,8 @@
                 <input type="file" name="gallery[]" multiple accept="image/jpeg,image/png,image/webp" aria-label="Ajouter des photos secondaires" data-gallery-input>
                 <small class="muted" data-gallery-hint>JPG, PNG ou WebP · 3 Mo max chacune · 12 photos au maximum.</small>
                 <ul class="gallery-new" data-gallery-preview></ul>
+                <button type="button" class="btn media-pick-btn" data-media-pick-gallery><x-admin.icon name="folder" :size="17" /> Ajouter depuis la médiathèque</button>
+                <ul class="media-picked" data-media-gallery-picked></ul>
                 @error('gallery')<small class="fe">{{ $message }}</small>@enderror
                 @foreach ($errors->get('gallery.*') as $messages)<small class="fe">{{ $messages[0] }}</small>@endforeach
             </div>

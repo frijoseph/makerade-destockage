@@ -11,6 +11,8 @@
 
 - Les e-mails sont testés avec `Mail::fake()` : essayer un vrai serveur SMTP depuis Paramètres › E-mails (bouton de test). Pas encore d'e-mail de bienvenue newsletter ni de relance de panier.
 
+- Médiathèque : pas de sous-dossiers, pas encore de sélecteur pour les photos de variantes ni pour les images de bannières/logo des Paramètres. La limite d'envoi réelle dépend de PHP (`upload_max_filesize`, 2 Mo par défaut sous Herd) : la compression navigateur la contourne pour les images, pas pour les PDF.
+
 ## Avant la mise en production
 - `APP_DEBUG=false`, `ADMIN_PASSWORD` fort, `APP_URL` en https, sessions sécurisées.
 - Brancher un vrai fournisseur d'e-mail pour la réinitialisation de mot de passe.

@@ -70,6 +70,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', Admin\DashboardController::class)->name('dashboard');
         Route::get('/search', Admin\SearchController::class)->name('search');
 
+        Route::get('/media', [Admin\MediaController::class, 'index'])->name('media.index');
+        Route::get('/media/browse', [Admin\MediaController::class, 'browse'])->name('media.browse');
+        Route::post('/media/folders', [Admin\MediaController::class, 'storeFolder'])->name('media.folders.store');
+        Route::put('/media/folders/{folder}', [Admin\MediaController::class, 'updateFolder'])->name('media.folders.update');
+        Route::delete('/media/folders/{folder}', [Admin\MediaController::class, 'destroyFolder'])->name('media.folders.destroy');
+        Route::post('/media/files', [Admin\MediaController::class, 'upload'])->middleware('throttle:60,1')->name('media.upload');
+        Route::put('/media/files/{file}', [Admin\MediaController::class, 'updateFile'])->name('media.files.update');
+        Route::delete('/media/files/{file}', [Admin\MediaController::class, 'destroyFile'])->name('media.files.destroy');
+        Route::post('/media/optimize', [Admin\MediaController::class, 'optimize'])->middleware('throttle:6,1')->name('media.optimize');
+        Route::get('/media/zip/{folder}', [Admin\MediaController::class, 'zip'])->name('media.zip');
+
         Route::get('/profile', [Admin\ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [Admin\ProfileController::class, 'update'])->name('profile.update');
         Route::put('/profile/password', [Admin\ProfileController::class, 'password'])->middleware('throttle:6,1')->name('profile.password');

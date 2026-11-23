@@ -32,6 +32,7 @@
             ['admin.products.index', 'admin.products.*', 'box', 'Produits', null],
             ['admin.categories.index', 'admin.categories.*', 'grid', 'Catégories', null],
             ['admin.brands.index', 'admin.brands.*', 'tag', 'Marques', null],
+            ['admin.media.index', 'admin.media.*', 'image', 'Médiathèque', null],
             ['admin.stock.index', 'admin.stock.*', 'stock', 'Stock', $lowStockCount ?: null],
         ]],
         ['label' => 'Marketing', 'links' => [

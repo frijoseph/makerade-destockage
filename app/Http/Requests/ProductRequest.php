@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Setting;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -45,6 +46,7 @@ class ProductRequest extends FormRequest
     {
         $product = $this->route('product');
         $isCreating = ! $product instanceof Product;
+        $maxKb = max(1, (int) Setting::get('media_max_upload_mb')) * 1024;
 
         return [
             'name' => ['required', 'string', 'max:255'],
@@ -65,10 +67,13 @@ class ProductRequest extends FormRequest
             'label' => ['nullable', 'string', 'max:255'],
             'rating' => ['nullable', 'numeric', 'min:0', 'max:5'],
             'reviews' => ['nullable', 'integer', 'min:0'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:'.$maxKb],
+            'image_media_id' => ['nullable', 'integer', Rule::exists('media_files', 'id')],
+            'gallery_media_ids' => ['nullable', 'array', 'max:12'],
+            'gallery_media_ids.*' => ['integer', Rule::exists('media_files', 'id')],
             'remove_image' => ['nullable', 'boolean'],
             'gallery' => ['nullable', 'array', 'max:10'],
-            'gallery.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'gallery.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:'.$maxKb],
             'remove_gallery' => ['nullable', 'array'],
             'remove_gallery.*' => ['integer'],
             'promote_image' => ['nullable', 'integer'],
@@ -84,7 +89,7 @@ class ProductRequest extends FormRequest
             'variants.*.old_price' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
             'variants.*.stock' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'variants.*.is_active' => ['nullable', 'boolean'],
-            'variants.*.image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'variants.*.image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:'.$maxKb],
             'variants.*.remove_image' => ['nullable', 'boolean'],
             'is_new' => ['boolean'],
             'is_hot' => ['boolean'],
@@ -140,7 +145,7 @@ class ProductRequest extends FormRequest
             'old_price.gt' => 'Le prix barré doit être supérieur au prix de vente.',
             'gallery.max' => 'Dix photos secondaires au maximum par envoi.',
             'gallery.*.image' => 'Chaque photo secondaire doit être une image.',
-            'gallery.*.max' => 'Chaque photo secondaire fait 3 Mo au maximum.',
+            'gallery.*.max' => 'Chaque photo secondaire fait '.(int) Setting::get('media_max_upload_mb').' Mo au maximum.',
             'stock.prohibited' => 'Le stock se modifie depuis l’écran Stock (mouvement tracé).',
         ];
     }

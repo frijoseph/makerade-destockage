@@ -7,6 +7,7 @@ use App\Models\ProductImage;
 use App\Models\ProductVariant;
 use App\Models\User;
 use App\StockMovementType;
+use App\Support\Media\MediaLibrary;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -46,7 +47,7 @@ class ProductVariants
                 $upload = $row['image'] ?? null;
                 if ($upload instanceof UploadedFile) {
                     static::deleteFile($variant?->image);
-                    $attributes['image'] = $upload->store('products/variants', 'public');
+                    $attributes['image'] = MediaLibrary::storeForProduct($upload, $product);
                 } elseif (! empty($row['remove_image']) && $variant) {
                     static::deleteFile($variant->image);
                     $attributes['image'] = null;
@@ -95,8 +96,9 @@ class ProductVariants
      *
      * @param  list<UploadedFile>  $uploads
      * @param  list<int|string>  $removeIds
+     * @param  list<string>  $mediaPaths  files picked in the media library
      */
-    public static function syncGallery(Product $product, array $uploads, array $removeIds, ?int $promoteId): void
+    public static function syncGallery(Product $product, array $uploads, array $removeIds, ?int $promoteId, array $mediaPaths = []): void
     {
         $product->images()->whereIn('id', $removeIds)->get()->each(function (ProductImage $image): void {
             static::deleteFile($image->path);
@@ -116,7 +118,12 @@ class ProductVariants
 
         $position = (int) $product->images()->max('position');
         foreach ($uploads as $upload) {
-            $product->images()->create(['path' => $upload->store('products/gallery', 'public'), 'position' => ++$position]);
+            $product->images()->create(['path' => MediaLibrary::storeForProduct($upload, $product), 'position' => ++$position]);
+        }
+
+        $already = $product->images()->pluck('path')->push($product->image)->filter()->all();
+        foreach (array_diff(array_unique($mediaPaths), $already) as $path) {
+            $product->images()->create(['path' => $path, 'position' => ++$position]);
         }
     }
 
@@ -130,9 +137,12 @@ class ProductVariants
         $product->variants()->get()->each(fn (ProductVariant $variant) => static::deleteFile($variant->image));
     }
 
+    /**
+     * Files that live in the media library are kept: only the product's link to them is removed.
+     */
     private static function deleteFile(?string $path): void
     {
-        if ($path) {
+        if ($path && ! MediaLibrary::isInLibrary($path)) {
             Storage::disk('public')->delete($path);
         }
     }

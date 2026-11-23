@@ -231,6 +231,19 @@ class SettingsSchema
                     'print_auto_open' => ['type' => 'boolean', 'label' => 'Ouvrir la fenêtre d’impression automatiquement', 'default' => true],
                 ],
             ],
+            'media' => [
+                'label' => 'Médiathèque',
+                'icon' => 'image',
+                'fields' => [
+                    'media_compress_enabled' => ['type' => 'boolean', 'label' => 'Compresser automatiquement les images envoyées', 'help' => 'Réduit le poids des photos (pages plus rapides, moins d’espace disque).', 'default' => true],
+                    'media_max_dimension' => ['type' => 'number', 'label' => 'Taille maximale d’une image (pixels, côté le plus long)', 'help' => '1600 convient à l’écran et au zoom produit. Les images plus grandes sont réduites.', 'default' => 1600, 'rules' => ['required', 'integer', 'min:300', 'max:6000']],
+                    'media_quality' => ['type' => 'number', 'label' => 'Qualité de compression (40 à 100)', 'help' => '80–85 : excellent compromis qualité / poids.', 'default' => 82, 'rules' => ['required', 'integer', 'min:40', 'max:100']],
+                    'media_convert_webp' => ['type' => 'boolean', 'label' => 'Convertir les JPEG et PNG en WebP', 'help' => 'Format moderne, 25 à 35 % plus léger à qualité égale. Compatible avec tous les navigateurs récents.', 'default' => true],
+                    'media_max_upload_mb' => ['type' => 'number', 'label' => 'Poids maximal d’un fichier envoyé (Mo)', 'help' => 'Limité aussi par la configuration PHP du serveur (upload_max_filesize).', 'default' => 8, 'rules' => ['required', 'integer', 'min:1', 'max:50']],
+                    'media_allow_documents' => ['type' => 'boolean', 'label' => 'Accepter aussi les documents (PDF, Word, Excel, CSV, texte)', 'default' => true],
+                    'media_product_folders' => ['type' => 'boolean', 'label' => 'Classer les photos des produits dans un dossier à leur nom', 'help' => 'Les photos envoyées depuis une fiche produit sont rangées automatiquement dans la médiathèque.', 'default' => true],
+                ],
+            ],
             'emails' => [
                 'label' => 'E-mails',
                 'icon' => 'mail',
