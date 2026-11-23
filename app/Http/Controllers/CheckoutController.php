@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\OrderChannel;
 use App\PaymentMethod;
 use App\Support\CartResolver;
+use App\Support\Mail\Notifier;
 use App\Support\OrderPlacement;
 use DomainException;
 use Illuminate\Http\JsonResponse;
@@ -40,6 +41,8 @@ class CheckoutController extends Controller
         } catch (DomainException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
         }
+
+        Notifier::orderPlaced($order);
 
         return response()->json([
             'number' => $order->number,

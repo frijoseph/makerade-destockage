@@ -143,45 +143,80 @@ class ShopSettings
     public function footerColumns(): array
     {
         return collect((array) Setting::get('footer_columns'))->map(function (array $column): array {
-            $links = collect(preg_split('/\R/', (string) ($column['links'] ?? '')))
-                ->map(fn (string $line): string => trim($line))
-                ->filter()
-                ->flatMap(function (string $line): array {
-                    if (mb_strtolower($line) === 'catégories') {
-                        return array_map(fn (array $category): array => ['label' => $category['name'], 'url' => route('shop', ['cat' => $category['slug']])], Catalog::categories());
-                    }
-
-                    [$label, $url] = array_pad(array_map('trim', explode('|', $line, 2)), 2, '');
-
-                    return [['label' => Setting::interpolate($label), 'url' => Setting::link($url)]];
-                })
-                ->values()
-                ->all();
-
-            return ['title' => Setting::interpolate($column['title'] ?? ''), 'links' => $links];
+            return ['title' => Setting::interpolate($column['title'] ?? ''), 'links' => $this->parseLinks((string) ($column['links'] ?? ''))];
         })->all();
+    }
+
+    /**
+     * One link per line, « Libellé | /adresse »; the word « catégories » alone lists the active categories.
+     *
+     * @return list<array{label: string, url: string}>
+     */
+    private function parseLinks(string $text): array
+    {
+        return collect(preg_split('/\R/', $text))
+            ->map(fn (string $line): string => trim($line))
+            ->filter()
+            ->flatMap(function (string $line): array {
+                if (mb_strtolower($line) === 'catégories') {
+                    return array_map(fn (array $category): array => ['label' => $category['name'], 'url' => route('shop', ['cat' => $category['slug']])], Catalog::categories());
+                }
+
+                [$label, $url] = array_pad(array_map('trim', explode('|', $line, 2)), 2, '');
+
+                return [['label' => Setting::interpolate($label), 'url' => Setting::link($url)]];
+            })
+            ->values()
+            ->all();
     }
 
     /**
      * Header menu: configured links, or the active categories when none are set.
      *
-     * @return list<array{label: string, url: string}>
+     * @return list<array{label: string, url: string, children: list<array{label: string, url: string}>}>
      */
     public function headerMenu(): array
     {
         $links = collect((array) Setting::get('header_menu'))
             ->filter(fn (array $link): bool => ($link['label'] ?? '') !== '')
-            ->map(fn (array $link): array => ['label' => Setting::interpolate($link['label']), 'url' => Setting::link($link['url'] ?? '')])
+            ->map(fn (array $link): array => [
+                'label' => Setting::interpolate($link['label']),
+                'url' => Setting::link($link['url'] ?? ''),
+                'children' => $this->parseLinks((string) ($link['children'] ?? '')),
+            ])
             ->values()
             ->all();
 
-        $links = $links ?: array_map(fn (array $category): array => ['label' => $category['name'], 'url' => route('shop', ['cat' => $category['slug']])], Catalog::categories());
+        if ($links === []) {
+            $links = $this->automaticMenu();
+        }
 
         if (Setting::get('all_products_link_enabled') && ($label = trim((string) Setting::get('all_products_link_label'))) !== '') {
-            array_unshift($links, ['label' => Setting::interpolate($label), 'url' => route('shop')]);
+            array_unshift($links, ['label' => Setting::interpolate($label), 'url' => route('shop'), 'children' => []]);
         }
 
         return $links;
+    }
+
+    /**
+     * Without a custom menu: the first categories, the others grouped under a « Plus » sub-menu so the bar never overflows.
+     *
+     * @return list<array{label: string, url: string, children: list<array{label: string, url: string}>}>
+     */
+    private function automaticMenu(): array
+    {
+        $items = array_map(fn (array $category): array => ['label' => $category['name'], 'url' => route('shop', ['cat' => $category['slug']]), 'children' => []], Catalog::categories());
+        $limit = (int) Setting::get('header_menu_auto_limit');
+
+        if ($limit <= 0 || count($items) <= $limit) {
+            return $items;
+        }
+
+        $more = array_map(fn (array $item): array => ['label' => $item['label'], 'url' => $item['url']], array_slice($items, $limit));
+        $items = array_slice($items, 0, $limit);
+        $items[] = ['label' => Setting::interpolate((string) Setting::get('header_more_label')) ?: 'Plus', 'url' => route('shop'), 'children' => $more];
+
+        return $items;
     }
 
     /**

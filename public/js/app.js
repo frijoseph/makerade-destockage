@@ -112,6 +112,20 @@
   $('#burger')?.addEventListener('click', () => document.body.classList.add('menu-open'));
   ['#scrim', '#drawerClose'].forEach(s => $(s)?.addEventListener('click', () => document.body.classList.remove('menu-open')));
 
+  /* ---------- sous-menus (en-tête et tiroir mobile) ---------- */
+  $$('.has-sub .sub-toggle').forEach(btn => btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const li = btn.closest('.has-sub'), open = !li.classList.contains('open');
+    $$('.has-sub.open').forEach(x => x.classList.remove('open'));
+    li.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open);
+  }));
+  document.addEventListener('click', e => { if (!e.target.closest('.has-sub')) $$('.has-sub.open').forEach(x => x.classList.remove('open')); });
+  $$('.d-sub-toggle').forEach(btn => btn.addEventListener('click', () => {
+    const li = btn.closest('.d-sub'), open = li.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open);
+  }));
+
   /* ---------- hero slider ---------- */
   const hero = $('#hero');
   if (hero) {

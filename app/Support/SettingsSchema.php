@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\OrderStatus;
 use App\PaymentMethod;
 
 /**
@@ -195,7 +196,9 @@ class SettingsSchema
                 'fields' => [
                     'all_products_link_enabled' => ['type' => 'boolean', 'label' => 'Ajouter « Tous les produits » en tête du menu', 'default' => true],
                     'all_products_link_label' => ['type' => 'text', 'label' => 'Libellé du lien « Tous les produits »', 'default' => 'Tous les produits'],
-                    'header_menu' => ['type' => 'list', 'label' => 'Menu principal', 'help' => 'Laissez vide pour afficher automatiquement les catégories actives.', 'default' => [], 'fields' => self::linkFields()],
+                    'header_menu' => ['type' => 'list', 'label' => 'Menu principal', 'help' => 'Laissez vide pour afficher automatiquement les catégories actives. Chaque entrée peut avoir un sous-menu : une ligne par lien au format « Libellé | /adresse » (le mot catégories seul liste les catégories).', 'default' => [], 'fields' => self::linkFields() + ['children' => ['type' => 'textarea', 'label' => 'Sous-menu (facultatif)']]],
+                    'header_menu_auto_limit' => ['type' => 'number', 'label' => 'Menu automatique : catégories affichées directement', 'help' => 'Les autres sont regroupées dans un sous-menu. 0 = toutes affichées. Sans effet si vous remplissez le menu principal ci-dessus.', 'default' => 5, 'rules' => ['required', 'integer', 'min:0', 'max:30']],
+                    'header_more_label' => ['type' => 'text', 'label' => 'Menu automatique : libellé du sous-menu', 'default' => 'Plus', 'rules' => ['nullable', 'string', 'max:40']],
                     'special_link_label' => ['type' => 'text', 'label' => 'Lien mis en avant (en-tête)', 'default' => 'Offres spéciales'],
                     'special_link_url' => ['type' => 'text', 'label' => 'Adresse du lien mis en avant', 'default' => '/best-deals'],
                     'footer_columns' => ['type' => 'list', 'label' => 'Colonnes du pied de page', 'help' => 'Un lien par ligne au format « Libellé | /adresse ». Le mot catégories seul liste les catégories actives.', 'default' => [
@@ -226,6 +229,32 @@ class SettingsSchema
                     'print_footer' => ['type' => 'textarea', 'label' => 'Pied de page', 'help' => 'Valeurs automatiques possibles : {return_days}, {contact_phone}, {contact_email}, {shop_name}.', 'default' => 'Merci de votre confiance ! Retours sous {return_days} jours · {contact_phone}'],
                     'print_ticket_width' => ['type' => 'select', 'label' => 'Largeur du ticket de caisse', 'default' => '80mm', 'options' => ['58mm' => '58 mm (petite imprimante)', '80mm' => '80 mm (standard)']],
                     'print_auto_open' => ['type' => 'boolean', 'label' => 'Ouvrir la fenêtre d’impression automatiquement', 'default' => true],
+                ],
+            ],
+            'emails' => [
+                'label' => 'E-mails',
+                'icon' => 'mail',
+                'fields' => [
+                    'mail_enabled' => ['type' => 'boolean', 'label' => 'Envoyer les e-mails automatiques', 'help' => 'Interrupteur général : désactivé, plus aucun e-mail de la boutique ne part (sauf le test et la réinitialisation de mot de passe).', 'default' => true],
+                    'mail_mode' => ['type' => 'select', 'label' => 'Serveur d’envoi', 'help' => 'Choisissez « Serveur SMTP » pour tout régler ici, ou conservez la configuration du fichier .env.', 'default' => 'smtp', 'options' => ['smtp' => 'Serveur SMTP (réglé ci-dessous)', 'env' => 'Configuration du fichier .env']],
+                    'mail_host' => ['show_when' => ['mail_mode' => 'smtp'], 'type' => 'text', 'label' => 'Serveur SMTP', 'help' => 'Ex. smtp.gmail.com, smtp.mailgun.org, mail.votredomaine.com.', 'default' => '', 'rules' => ['nullable', 'string', 'max:255']],
+                    'mail_port' => ['show_when' => ['mail_mode' => 'smtp'], 'type' => 'number', 'label' => 'Port', 'help' => '587 (TLS) ou 465 (SSL).', 'default' => 587, 'rules' => ['required', 'integer', 'min:1', 'max:65535']],
+                    'mail_encryption' => ['show_when' => ['mail_mode' => 'smtp'], 'type' => 'select', 'label' => 'Chiffrement', 'default' => 'tls', 'options' => ['tls' => 'TLS / STARTTLS (port 587)', 'ssl' => 'SSL (port 465)']],
+                    'mail_username' => ['show_when' => ['mail_mode' => 'smtp'], 'type' => 'text', 'label' => 'Identifiant SMTP', 'default' => '', 'rules' => ['nullable', 'string', 'max:255']],
+                    'mail_password' => ['show_when' => ['mail_mode' => 'smtp'], 'type' => 'secret', 'label' => 'Mot de passe SMTP', 'help' => 'Stocké chiffré, jamais réaffiché.', 'default' => ''],
+                    'mail_from_address' => ['type' => 'email', 'label' => 'Adresse d’expédition', 'help' => 'Souvent la même que l’identifiant SMTP. Vide = adresse du fichier .env.', 'default' => '', 'rules' => ['nullable', 'email']],
+                    'mail_from_name' => ['type' => 'text', 'label' => 'Nom de l’expéditeur', 'default' => '{shop_name}', 'rules' => ['nullable', 'string', 'max:120']],
+                    'mail_admin_address' => ['type' => 'email', 'label' => 'Adresse qui reçoit les alertes', 'help' => 'Vide = e-mail de contact de la boutique.', 'default' => '', 'rules' => ['nullable', 'email']],
+                    'mail_admin_new_order' => ['type' => 'boolean', 'label' => 'Alerte : nouvelle commande', 'default' => true],
+                    'mail_admin_contact' => ['type' => 'boolean', 'label' => 'Alerte : nouveau message de contact', 'default' => true],
+                    'mail_customer_order' => ['type' => 'boolean', 'label' => 'Client : confirmation de commande', 'help' => 'Envoyée seulement si le client a laissé une adresse e-mail.', 'default' => true],
+                    'mail_customer_order_subject' => ['type' => 'text', 'label' => 'Objet de la confirmation', 'help' => 'Valeurs : {order_number}, {customer_name}, {total}, {shop_name}.', 'default' => 'Votre commande {order_number} est bien enregistrée', 'rules' => ['nullable', 'string', 'max:200']],
+                    'mail_customer_order_intro' => ['type' => 'textarea', 'label' => 'Texte de la confirmation', 'default' => 'Merci {customer_name} ! Nous avons bien reçu votre commande {order_number}. Nous vous appelons très vite pour confirmer la livraison.'],
+                    'mail_customer_status' => ['type' => 'boolean', 'label' => 'Client : suivi de commande', 'help' => 'Un e-mail quand le statut de la commande change.', 'default' => true],
+                    'mail_customer_status_statuses' => ['type' => 'checkboxes', 'label' => 'Statuts qui déclenchent un e-mail', 'default' => ['confirmed', 'shipped', 'delivered', 'cancelled'], 'options' => collect(OrderStatus::cases())->mapWithKeys(fn (OrderStatus $status): array => [$status->value => $status->label()])->all()],
+                    'mail_customer_status_subject' => ['type' => 'text', 'label' => 'Objet du suivi', 'help' => 'Valeurs : {order_number}, {status}, {customer_name}, {shop_name}.', 'default' => 'Commande {order_number} : {status}', 'rules' => ['nullable', 'string', 'max:200']],
+                    'mail_customer_status_intro' => ['type' => 'textarea', 'label' => 'Texte du suivi', 'default' => 'Bonjour {customer_name}, le statut de votre commande {order_number} a changé : {status}.'],
+                    'mail_signature' => ['type' => 'text', 'label' => 'Signature', 'default' => 'À bientôt, l’équipe {shop_name}', 'rules' => ['nullable', 'string', 'max:200']],
                 ],
             ],
             'assistant' => [

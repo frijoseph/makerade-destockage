@@ -9,6 +9,7 @@ use App\Models\NewsletterSubscriber;
 use App\Models\Order;
 use App\Models\Popup;
 use App\OrderStatus;
+use App\Support\Mail\Notifier;
 use App\Support\Money;
 use App\Support\Phone;
 use Illuminate\Http\JsonResponse;
@@ -35,7 +36,7 @@ class ContactController extends Controller
             'message' => ['required', 'string', 'max:5000'],
         ], ['phone.required' => 'Indiquez un numéro de téléphone.', 'phone.regex' => 'Numéro de téléphone invalide.']);
 
-        ContactMessage::query()->create($data);
+        Notifier::contactReceived(ContactMessage::query()->create($data));
 
         return response()->json(['message' => 'Message envoyé. Nous vous répondons très vite.'], 201);
     }

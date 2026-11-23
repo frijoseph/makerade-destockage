@@ -18,6 +18,13 @@ Rien n'est figé dans le code : toute valeur métier est un réglage modifiable 
 - Menu latéral repliable en icônes (état mémorisé), profil en haut à droite avec menu (Mon profil, Déconnexion), page `/admin/profile` (nom, e-mail, mot de passe), en-tête opaque.
 - Tableaux CRUD simples en modale, SweetAlert2 partout (`window.MKUI`).
 
+## E-mails automatiques (Paramètres › E-mails)
+- Serveur SMTP réglé dans l'admin (hôte, port, chiffrement, identifiant, mot de passe chiffré, expéditeur) ou configuration du `.env` ; appliqué à chaque requête par `App\Support\Mail\MailSettings`. Bouton « Envoyer un e-mail de test ».
+- `Notifier` (app/Support/Mail) : alerte à la boutique (nouvelle commande, nouveau message de contact), confirmation de commande et suivi de statut au client (seulement s'il a une adresse e-mail). Chaque envoi a son interrupteur et ses textes modifiables ; une panne SMTP n'empêche jamais une commande. Gabarit unique `resources/views/emails/shop.blade.php` (classe `ShopMail`).
+
+## Menu de l'en-tête
+- Menu principal paramétrable avec sous-menus (une ligne « Libellé | /adresse » par lien, ou le mot `catégories`). Sans menu personnalisé : les N premières catégories (`header_menu_auto_limit`, défaut 5) et le reste dans un sous-menu « Plus ». Tiroir mobile en accordéon.
+
 ## Assistant de discussion
 - Deux modes (réglage `ai_mode`) : **robot intégré** (défaut, sans API : règles de mots-clés `bot_rules`, livraison, paiement, retours, contact, produits, suivi de commande ; `App\Support\Assistant\ChatBot`) ou **IA avec clé API** (Anthropic ou compatible OpenAI ; `LlmClient`, `KnowledgeBase`). Si l'IA est indisponible, le robot répond.
 - Suivi de commande seulement avec numéro + téléphone correspondant, ou compte connecté. Conversations consultables en admin, purge planifiée.

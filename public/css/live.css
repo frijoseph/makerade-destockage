@@ -112,3 +112,24 @@ body.mini-open{overflow:hidden}
 .pv-chip.na{opacity:.4;border-style:dashed}
 .price .from{font-size:12px;color:var(--mut);font-weight:600}
 .btn:disabled,.btn[disabled]{opacity:.5;cursor:not-allowed;filter:grayscale(.3);transform:none!important;box-shadow:none}
+
+/* Sous-menus de l'en-tête */
+.nav li { position: relative; }
+.has-sub { display: flex; align-items: center; gap: 3px; }
+.sub-toggle { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: none; color: #555; cursor: pointer; }
+.sub-toggle .ic { transition: transform .2s; }
+.has-sub:hover .sub-toggle .ic, .has-sub.open .sub-toggle .ic { transform: rotate(180deg); }
+.subdrop { position: absolute; left: -14px; top: calc(100% + 12px); min-width: 230px; max-height: 70vh; overflow-y: auto; display: grid; gap: 2px; padding: 8px; list-style: none; margin: 0; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 24px 60px -16px rgba(0, 0, 0, .28); opacity: 0; visibility: hidden; transform: translateY(8px); transition: .2s; z-index: 70; }
+.subdrop::before { content: ""; position: absolute; left: 0; right: 0; top: -16px; height: 16px; }
+.subdrop a { display: block; padding: 9px 12px; border-radius: 9px; font-size: 13.5px; white-space: normal; }
+.subdrop a::after { display: none; }
+.subdrop a:hover { background: var(--g-l); color: var(--g); }
+.has-sub:hover .subdrop, .has-sub:focus-within .subdrop, .has-sub.open .subdrop { opacity: 1; visibility: visible; transform: none; }
+.drawer .d-sub-row { display: flex; align-items: center; justify-content: space-between; }
+.drawer .d-sub-row a { flex: 1; }
+.d-sub-toggle { display: grid; place-items: center; width: 40px; height: 40px; border: 0; background: none; border-radius: 10px; color: var(--mut); cursor: pointer; }
+.d-sub-toggle .ic { transition: transform .2s; }
+.d-sub.open .d-sub-toggle .ic { transform: rotate(180deg); }
+.d-sub-list { display: none; list-style: none; margin: 0 0 6px 12px; padding: 0 0 0 10px; border-left: 2px solid var(--line); }
+.d-sub.open .d-sub-list { display: block; }
+.d-sub-list a { font-size: 14px; opacity: .9; }

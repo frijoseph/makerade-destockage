@@ -9,6 +9,8 @@
 - Prendre le temps de tester l'assistant en mode IA avec une vraie clé (les tests utilisent des réponses simulées).
 - Pas de pull request ouverte : tout est sur `feat/back-office`.
 
+- Les e-mails sont testés avec `Mail::fake()` : essayer un vrai serveur SMTP depuis Paramètres › E-mails (bouton de test). Pas encore d'e-mail de bienvenue newsletter ni de relance de panier.
+
 ## Avant la mise en production
 - `APP_DEBUG=false`, `ADMIN_PASSWORD` fort, `APP_URL` en https, sessions sécurisées.
 - Brancher un vrai fournisseur d'e-mail pour la réinitialisation de mot de passe.

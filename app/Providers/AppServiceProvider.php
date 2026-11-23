@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Models\User;
 use App\OrderStatus;
+use App\Support\Mail\MailSettings;
 use App\Support\ShopSettings;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -39,6 +40,8 @@ class AppServiceProvider extends ServiceProvider
         View::share('shop', new ShopSettings);
 
         RateLimiter::for('assistant', fn (Request $request): Limit => Limit::perMinute(max(1, (int) Setting::get('ai_rate_limit', 10)))->by($request->ip()));
+
+        MailSettings::apply();
 
         ResetPassword::createUrlUsing(fn (User $user, string $token): string => route('password.reset', [
             'token' => $token,

@@ -43,4 +43,16 @@
         <button class="btn btn-primary btn-lg">Enregistrer « {{ $groups[$group]['label'] }} »</button>
     </div>
 </form>
+
+@if ($group === 'emails')
+    <section class="card" style="margin-top: 18px">
+        <header class="card-head"><h2>Tester l’envoi</h2></header>
+        <p class="muted" style="margin: -8px 0 14px; font-size: 13px">Enregistrez d’abord vos réglages, puis envoyez un e-mail de test pour vérifier le serveur.</p>
+        <form method="POST" action="{{ route('admin.settings.mail-test') }}" class="toolbar">
+            @csrf
+            <label class="field grow"><span class="sr-only">Adresse de test</span><input type="email" name="to" value="{{ old('to', auth()->user()->email) }}" required placeholder="vous@exemple.com"></label>
+            <button class="btn btn-primary">Envoyer un e-mail de test</button>
+        </form>
+    </section>
+@endif
 @endsection

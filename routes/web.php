@@ -118,6 +118,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/subscribers/export', [Admin\MessageController::class, 'export'])->name('subscribers.export');
 
         Route::middleware('admin:admin')->group(function () {
+            Route::post('/settings/emails/test', [Admin\SettingController::class, 'testMail'])->middleware('throttle:6,1')->name('settings.mail-test');
             Route::post('/zones', [Admin\DeliveryZoneController::class, 'store'])->name('zones.store');
             Route::put('/zones/{zone}', [Admin\DeliveryZoneController::class, 'update'])->name('zones.update');
             Route::delete('/zones/{zone}', [Admin\DeliveryZoneController::class, 'destroy'])->name('zones.destroy');

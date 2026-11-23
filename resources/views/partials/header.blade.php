@@ -33,7 +33,19 @@
             </div>
             <ul class="nav" id="nav">
                 @foreach ($nav as $link)
-                    <li><a href="{{ $link['url'] }}">{{ $link['label'] }}</a></li>
+                    @if ($link['children'])
+                        <li class="has-sub">
+                            <a href="{{ $link['url'] }}">{{ $link['label'] }}</a>
+                            <button type="button" class="sub-toggle" aria-expanded="false" aria-label="Sous-menu {{ $link['label'] }}"><x-icon name="chev-down" :size="13" :stroke="2.2" /></button>
+                            <ul class="subdrop">
+                                @foreach ($link['children'] as $child)
+                                    <li><a href="{{ $child['url'] }}">{{ $child['label'] }}</a></li>
+                                @endforeach
+                            </ul>
+                        </li>
+                    @else
+                        <li><a href="{{ $link['url'] }}">{{ $link['label'] }}</a></li>
+                    @endif
                 @endforeach
             </ul>
             @if ($shop->special_link_label)
@@ -50,7 +62,18 @@
     <ul>
         <li><a href="{{ route('home') }}">Accueil<x-icon name="chev-right" :size="16" /></a></li>
         @foreach ($nav as $link)
-            <li><a href="{{ $link['url'] }}">{{ $link['label'] }}<x-icon name="chev-right" :size="16" /></a></li>
+            @if ($link['children'])
+                <li class="d-sub">
+                    <div class="d-sub-row"><a href="{{ $link['url'] }}">{{ $link['label'] }}</a><button type="button" class="d-sub-toggle" aria-expanded="false" aria-label="Sous-menu {{ $link['label'] }}"><x-icon name="chev-down" :size="16" /></button></div>
+                    <ul class="d-sub-list">
+                        @foreach ($link['children'] as $child)
+                            <li><a href="{{ $child['url'] }}">{{ $child['label'] }}</a></li>
+                        @endforeach
+                    </ul>
+                </li>
+            @else
+                <li><a href="{{ $link['url'] }}">{{ $link['label'] }}<x-icon name="chev-right" :size="16" /></a></li>
+            @endif
         @endforeach
     </ul>
     <h4>Catégories</h4>

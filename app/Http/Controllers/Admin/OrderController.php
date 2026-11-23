@@ -10,6 +10,7 @@ use App\OrderChannel;
 use App\OrderStatus;
 use App\PaymentMethod;
 use App\PaymentStatus;
+use App\Support\Mail\Notifier;
 use App\Support\OrderPlacement;
 use Carbon\CarbonInterface;
 use DomainException;
@@ -130,9 +131,14 @@ class OrderController extends Controller
         $validated = $request->validate(['status' => ['required', Rule::enum(OrderStatus::class)]]);
 
         try {
+            $previous = $order->status;
             OrderPlacement::changeStatus($order, OrderStatus::from($validated['status']), $request->user());
         } catch (DomainException $exception) {
             return back()->withErrors(['status' => $exception->getMessage()]);
+        }
+
+        if ($order->status !== $previous) {
+            Notifier::orderStatusChanged($order);
         }
 
         return back()->with('status', 'Statut mis à jour : '.$order->status->label().'.');
