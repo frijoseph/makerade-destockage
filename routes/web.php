@@ -130,6 +130,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::middleware('admin:admin')->group(function () {
             Route::post('/settings/emails/test', [Admin\SettingController::class, 'testMail'])->middleware('throttle:6,1')->name('settings.mail-test');
+            Route::get('/users', [Admin\UserController::class, 'index'])->name('users.index');
+            Route::post('/users', [Admin\UserController::class, 'store'])->name('users.store');
+            Route::put('/users/{user}', [Admin\UserController::class, 'update'])->name('users.update');
+            Route::delete('/users/{user}', [Admin\UserController::class, 'destroy'])->name('users.destroy');
             Route::post('/zones', [Admin\DeliveryZoneController::class, 'store'])->name('zones.store');
             Route::put('/zones/{zone}', [Admin\DeliveryZoneController::class, 'update'])->name('zones.update');
             Route::delete('/zones/{zone}', [Admin\DeliveryZoneController::class, 'destroy'])->name('zones.destroy');

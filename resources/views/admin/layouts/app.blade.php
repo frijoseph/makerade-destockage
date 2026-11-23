@@ -45,6 +45,7 @@
     ];
     if ($user->isAdmin()) {
         $groups[] = ['label' => 'Boutique', 'links' => [
+            ['admin.users.index', 'admin.users.*', 'users', 'Utilisateurs', null],
             ['admin.settings.edit', 'admin.settings.*', 'settings', 'Paramètres', null],
         ]];
     }

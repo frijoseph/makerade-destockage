@@ -23,6 +23,10 @@ Rien n'est figé dans le code : toute valeur métier est un réglage modifiable 
 - Compression : dans le navigateur avant l'envoi (une photo de 5 Mo passe sous la limite PHP de 2 Mo) puis côté serveur avec GD (`app/Support/Media/ImageOptimizer.php` : côté max, qualité, conversion WebP, orientation EXIF, garde-fou mémoire). Bouton « Optimiser » pour recompresser un dossier (format conservé pour ne pas casser les liens produits). Tous les réglages sont dans Paramètres › Médiathèque.
 - Fiche produit : les photos envoyées sont compressées et rangées automatiquement dans un dossier au nom du produit (`MediaLibrary::storeForProduct`) ; boutons « Choisir dans la médiathèque » pour la photo principale et les secondaires (sélecteur `window.MKMedia.pick`). Les fichiers de la médiathèque ne sont jamais supprimés avec un produit.
 
+## Utilisateurs (admin › Utilisateurs, réservé aux administrateurs)
+- Créer, modifier, désactiver, supprimer un compte (administrateur, gestionnaire ou client) avec son profil (ville, adresse, stockés dans la fiche client liée). Mot de passe optionnel à la modification. Garde-fous : on ne peut ni se rétrograder, ni se désactiver, ni se supprimer, ni retirer le dernier administrateur actif ; un utilisateur qui a des commandes ne se supprime pas (on le désactive).
+- Un administrateur ou gestionnaire qui ouvre /account est redirigé vers l'administration. L'inscription publique crée toujours un client actif (le rôle ne peut pas être imposé par le formulaire).
+
 ## E-mails automatiques (Paramètres › E-mails)
 - Serveur SMTP réglé dans l'admin (hôte, port, chiffrement, identifiant, mot de passe chiffré, expéditeur) ou configuration du `.env` ; appliqué à chaque requête par `App\Support\Mail\MailSettings`. Bouton « Envoyer un e-mail de test ».
 - `Notifier` (app/Support/Mail) : alerte à la boutique (nouvelle commande, nouveau message de contact), confirmation de commande et suivi de statut au client (seulement s'il a une adresse e-mail). Chaque envoi a son interrupteur et ses textes modifiables ; une panne SMTP n'empêche jamais une commande. Gabarit unique `resources/views/emails/shop.blade.php` (classe `ShopMail`).

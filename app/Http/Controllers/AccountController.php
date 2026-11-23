@@ -19,12 +19,16 @@ use Illuminate\View\View;
  */
 class AccountController extends Controller
 {
-    public function show(Request $request): View
+    public function show(Request $request): View|RedirectResponse
     {
         $user = $request->user();
 
         if (! $user) {
             return view('pages.account', ['member' => null]);
+        }
+
+        if ($user->canAccessAdmin()) {
+            return redirect()->route('admin.dashboard');
         }
 
         $orders = Order::query()->where('user_id', $user->id)->withSum('items as units', 'quantity')->latest('placed_at')->get();
