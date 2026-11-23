@@ -27,6 +27,12 @@ Rien n'est figé dans le code : toute valeur métier est un réglage modifiable 
 - Créer, modifier, désactiver, supprimer un compte (administrateur, gestionnaire ou client) avec son profil (ville, adresse, stockés dans la fiche client liée). Mot de passe optionnel à la modification. Garde-fous : on ne peut ni se rétrograder, ni se désactiver, ni se supprimer, ni retirer le dernier administrateur actif ; un utilisateur qui a des commandes ne se supprime pas (on le désactive).
 - Un administrateur ou gestionnaire qui ouvre /account est redirigé vers l'administration. L'inscription publique crée toujours un client actif (le rôle ne peut pas être imposé par le formulaire).
 
+## Audit du 23/11 (correctifs)
+- Un compte désactivé est déconnecté dès sa requête suivante (middleware `LogoutDeactivatedUser`).
+- Une commande ne réécrit plus la fiche d'un client rattaché à un compte (le téléphone n'est pas vérifié) ; les infos de livraison restent sur la commande.
+- Noms de fichiers de la médiathèque nettoyés (`MediaLibrary::safeName`) : plus de `../` dans les ZIP.
+- Aucune faille connue dans les dépendances Composer ; pas de SQL brut non paramétré ; sorties Blade/JS échappées.
+
 ## E-mails automatiques (Paramètres › E-mails)
 - Serveur SMTP réglé dans l'admin (hôte, port, chiffrement, identifiant, mot de passe chiffré, expéditeur) ou configuration du `.env` ; appliqué à chaque requête par `App\Support\Mail\MailSettings`. Bouton « Envoyer un e-mail de test ».
 - `Notifier` (app/Support/Mail) : alerte à la boutique (nouvelle commande, nouveau message de contact), confirmation de commande et suivi de statut au client (seulement s'il a une adresse e-mail). Chaque envoi a son interrupteur et ses textes modifiables ; une panne SMTP n'empêche jamais une commande. Gabarit unique `resources/views/emails/shop.blade.php` (classe `ShopMail`).

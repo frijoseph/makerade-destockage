@@ -37,7 +37,7 @@
   }
 
   /* ---------- toast (SweetAlert2) ---------- */
-  const esc = x => window.MKUI ? MKUI.esc(x) : String(x ?? '');
+  const esc = x => window.MKUI ? MKUI.esc(x) : String(x ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   function toast(msg, link, type = 'success') {
     const html = esc(msg) + (link ? `<a href="${esc(link[1])}">${esc(link[0])}</a>` : '');
     if (window.MKUI) MKUI.toast(html, type, { html: true }); else console.log(msg);

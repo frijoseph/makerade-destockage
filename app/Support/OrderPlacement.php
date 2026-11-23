@@ -50,15 +50,20 @@ class OrderPlacement
         return DB::transaction(function () use ($customer, $lines, $channel, $paymentMethod, $notes, $placedBy, $discount, $couponCode, $account): Order {
             $resolved = static::resolveLines($lines);
 
-            $buyer = Customer::query()->updateOrCreate(
-                ['phone' => Customer::normalizePhone($customer['phone'], $customer['phone_country'] ?? null)],
-                array_filter([
+            $buyer = Customer::query()->firstOrNew(['phone' => Customer::normalizePhone($customer['phone'], $customer['phone_country'] ?? null)]);
+
+            // The phone number is not verified: an order must not rewrite the profile of a customer who belongs
+            // to another account (name, e-mail, address). The delivery details of the order itself are kept on the order.
+            $ownedByOther = $buyer->exists && $buyer->user_id !== null && $buyer->user_id !== $account?->id;
+
+            if (! $ownedByOther) {
+                $buyer->fill(array_filter([
                     'name' => $customer['name'],
                     'email' => $customer['email'] ?? null,
                     'city' => $customer['city'] ?? null,
                     'address' => $customer['address'] ?? null,
-                ], fn ($value): bool => $value !== null && $value !== ''),
-            );
+                ], fn ($value): bool => $value !== null && $value !== ''))->save();
+            }
 
             if ($account) {
                 AccountLinker::linkIfSafe($account, $buyer);
@@ -89,7 +94,7 @@ class OrderPlacement
                 'coupon_id' => $coupon?->id,
                 'coupon_code' => $coupon?->code,
                 'total' => $subtotal + $shippingFee - $discount,
-                'shipping_name' => $buyer->name,
+                'shipping_name' => $customer['name'] ?? $buyer->name,
                 'shipping_phone' => $buyer->phone,
                 'shipping_city' => $city,
                 'shipping_address' => $customer['address'] ?? $buyer->address,

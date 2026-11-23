@@ -168,6 +168,10 @@ class MediaController extends Controller
             'media_folder_id' => ['sometimes', 'nullable', 'integer', Rule::exists('media_folders', 'id')],
         ]);
 
+        if (isset($data['name'])) {
+            $data['name'] = MediaLibrary::safeName($data['name']);
+        }
+
         $file->update($data);
 
         return response()->json(['message' => 'Fichier mis à jour.']);

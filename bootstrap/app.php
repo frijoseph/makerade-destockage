@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureUserCanAccessAdmin;
+use App\Http\Middleware\LogoutDeactivatedUser;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -18,7 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => EnsureUserCanAccessAdmin::class,
         ]);
 
-        $middleware->web(append: [SecurityHeaders::class]);
+        $middleware->web(append: [SecurityHeaders::class, LogoutDeactivatedUser::class]);
 
         $middleware->redirectGuestsTo(fn (Request $request) => $request->is('admin*') ? route('admin.login') : route('account'));
         $middleware->redirectUsersTo(fn () => route('account'));

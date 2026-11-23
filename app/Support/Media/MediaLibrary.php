@@ -192,7 +192,7 @@ class MediaLibrary
                 return;
             }
 
-            $name = $file->name;
+            $name = self::safeName($file->name);
             $used[$name] = ($used[$name] ?? 0) + 1;
 
             if ($used[$name] > 1) {
@@ -227,6 +227,17 @@ class MediaLibrary
         }
 
         return [$result['contents'], $result['mime'], $result['extension'], $result['width'], $result['height']];
+    }
+
+    /**
+     * A file name without any folder part or control character: it ends up in ZIP archives, where "../" would escape the extraction folder.
+     */
+    public static function safeName(string $name): string
+    {
+        $clean = basename(str_replace('\\', '/', (string) preg_replace('/[\x00-\x1F\x7F]/u', '', $name)));
+        $clean = trim($clean, " .\t");
+
+        return $clean === '' ? 'fichier' : $clean;
     }
 
     private static function displayName(string $original, string $extension): string
