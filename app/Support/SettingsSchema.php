@@ -209,7 +209,7 @@ class SettingsSchema
                     'footer_script' => ['type' => 'text', 'label' => 'Texte manuscrit du pied de page', 'default' => 'Maison propre, vie sereine'],
                     'newsletter_title' => ['type' => 'text', 'label' => 'Titre de la newsletter', 'default' => 'Restez propre. Restez informé.'],
                     'newsletter_text' => ['type' => 'textarea', 'label' => 'Texte de la newsletter', 'default' => 'Abonnez-vous pour recevoir nos dernières offres, les arrivages et des promotions exclusives.'],
-                    'footer_credits' => ['type' => 'markdown', 'label' => 'Crédits (bas de page)', 'default' => 'Photos d’ambiance : [StockSnap](https://stocksnap.io) et [Rawpixel](https://www.rawpixel.com) (CC0). Photos de produits : [Open Beauty Facts](https://world.openbeautyfacts.org) (CC BY-SA 3.0). Marques citées à titre d’illustration.'],
+                    'footer_credits' => ['type' => 'markdown', 'label' => 'Crédits (bas de page)', 'default' => ''],
                 ],
             ],
             'documents' => [
