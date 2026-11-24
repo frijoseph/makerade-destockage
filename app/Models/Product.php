@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\RichText;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,6 +30,24 @@ class Product extends Model
      * @var list<string>
      */
     public const KINDS = ['bottle', 'pack', 'tube', 'box', 'soap'];
+
+    /**
+     * The description is written in the rich text editor: it is cleaned before being saved (plain text is left as typed).
+     *
+     * @return Attribute<string|null, string|null>
+     */
+    protected function description(): Attribute
+    {
+        return Attribute::make(set: fn (?string $value): ?string => RichText::storable($value));
+    }
+
+    /**
+     * What the editor shows: older plain-text descriptions are converted to formatted text.
+     */
+    public function editorDescription(): string
+    {
+        return RichText::toHtml($this->description);
+    }
 
     /**
      * @return array<string, string>

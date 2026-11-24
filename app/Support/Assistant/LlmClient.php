@@ -33,7 +33,7 @@ class LlmClient
      *
      * @throws RuntimeException when the provider is unreachable or answers with an error
      */
-    public static function complete(string $system, array $messages): string
+    public static function complete(string $system, array $messages, ?int $maxTokens = null, ?float $temperature = null): string
     {
         $key = self::apiKey();
 
@@ -44,8 +44,8 @@ class LlmClient
         $provider = Setting::get('ai_provider') === 'openai' ? 'openai' : 'anthropic';
         $model = trim((string) Setting::get('ai_model')) ?: self::DEFAULT_MODELS[$provider];
         $base = rtrim(trim((string) Setting::get('ai_base_url')) ?: self::DEFAULT_URLS[$provider], '/');
-        $maxTokens = (int) Setting::get('ai_max_tokens');
-        $temperature = (float) Setting::get('ai_temperature');
+        $maxTokens ??= (int) Setting::get('ai_max_tokens');
+        $temperature ??= (float) Setting::get('ai_temperature');
 
         try {
             $response = $provider === 'anthropic'

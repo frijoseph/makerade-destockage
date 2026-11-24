@@ -13,6 +13,13 @@
     @unless ($isNew)<a href="{{ $page->url() }}" target="_blank" rel="noopener" class="btn"><x-admin.icon name="eye" :size="18" /> Voir</a>@endunless
 @endsection
 
+@push('scripts')
+    <script src="{{ asset('js/admin-editor.js') }}?v={{ filemtime(public_path('js/admin-editor.js')) }}" defer></script>
+    <script src="{{ asset('js/admin-writer.js') }}?v={{ filemtime(public_path('js/admin-writer.js')) }}" defer></script>
+    <script>window.MK_MEDIA = { browse: @json(route('admin.media.browse')) };</script>
+    <script src="{{ asset('js/admin-media.js') }}?v={{ filemtime(public_path('js/admin-media.js')) }}" defer></script>
+@endpush
+
 @section('content')
 <form method="POST" enctype="multipart/form-data" class="grid-side" action="{{ $isNew ? route('admin.pages.store') : route('admin.pages.update', $page) }}">
     @csrf
@@ -25,8 +32,19 @@
             <label class="field"><span>Adresse <em>(slug)</em></span><input type="text" name="slug" value="{{ old('slug', $page->slug) }}" placeholder="générée depuis le titre" @error('slug') aria-invalid="true" @enderror>
                 <small>{{ $isArticle ? url('/blog') : url('/page') }}/<b>{{ $page->slug ?: '…' }}</b></small></label>
             <label class="field"><span>Résumé <em>(facultatif)</em></span><textarea name="excerpt" rows="2">{{ old('excerpt', $page->excerpt) }}</textarea></label>
-            <label class="field"><span>Contenu</span><textarea name="body" rows="18" style="font-family: ui-monospace, monospace; font-size: 13px">{{ old('body', $page->body) }}</textarea>
-                <small>Markdown : <code>## Titre</code>, <code>**gras**</code>, <code>- liste</code>, <code>[lien](https://…)</code>. Valeurs automatiques : <code>{shop_name}</code>, <code>{return_days}</code>, <code>{free_shipping_threshold}</code>, <code>{contact_email}</code>…</small></label>
+            @php
+                $writerOn = \App\Support\Content\DescriptionWriter::enabled() && $isArticle;
+                $writerConfig = ['type' => 'article', 'url' => route('admin.content.generate'), 'name' => '[name=title]', 'tag' => '[name=tag]', 'excerpt' => '[name=excerpt]',
+                    'auto' => $writerOn && (bool) \App\Models\Setting::get('writer_auto'), 'ignoreId' => $page->exists ? $page->id : null];
+            @endphp
+            <div class="field" @if ($writerOn) data-writer="{{ json_encode($writerConfig) }}" @endif>
+                <div class="rte-gen"><span>Contenu</span>
+                    @if ($writerOn)<button type="button" class="btn btn-sm" data-writer-run title="Rédige un article complet à partir du titre et de la rubrique"><x-admin.icon name="sparkles" :size="16" /> Rédiger l’article</button>@endif
+                </div>
+                <textarea name="body" rows="18" data-rich placeholder="Écrivez votre contenu…">{{ old('body', $page->editorBody()) }}</textarea>
+                @error('body')<small class="err">{{ $message }}</small>@enderror
+                <small>Valeurs automatiques à écrire dans le texte : <code>{shop_name}</code>, <code>{return_days}</code>, <code>{free_shipping_threshold}</code>, <code>{contact_email}</code>…</small>
+            </div>
         </div>
     </section>
 

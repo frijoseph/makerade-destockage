@@ -11,6 +11,7 @@ use App\PaymentMethod;
 use App\Support\Catalog;
 use App\Support\Money;
 use App\Support\Phone;
+use App\Support\RichText;
 use App\Support\ShopSettings;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -151,7 +152,7 @@ class KnowledgeBase
             ->unique()->values();
 
         $scored = collect(Catalog::products())->map(function (array $product) use ($tokens): array {
-            $haystack = Str::ascii(mb_strtolower(implode(' ', [$product['name'], $product['variant'], $product['brand'], $product['category'], $product['description'] ?? ''])));
+            $haystack = Str::ascii(mb_strtolower(implode(' ', [$product['name'], $product['variant'], $product['brand'], $product['category'], RichText::plain($product['description'] ?? '')])));
             $score = $tokens->sum(fn (string $token): int => str_contains($haystack, $token) ? (str_contains(Str::ascii(mb_strtolower($product['name'])), $token) ? 3 : 1) : 0);
 
             return ['score' => $score, 'product' => $product];

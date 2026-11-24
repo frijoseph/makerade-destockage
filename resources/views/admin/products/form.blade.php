@@ -13,6 +13,8 @@
 @endsection
 
 @push('scripts')
+    <script src="{{ asset('js/admin-editor.js') }}?v={{ filemtime(public_path('js/admin-editor.js')) }}" defer></script>
+    <script src="{{ asset('js/admin-writer.js') }}?v={{ filemtime(public_path('js/admin-writer.js')) }}" defer></script>
     <script>window.MK_MEDIA = { browse: @json(route('admin.media.browse')) };</script>
     <script src="{{ asset('js/admin-media.js') }}?v={{ filemtime(public_path('js/admin-media.js')) }}" defer></script>
     <script src="{{ asset('js/admin-variants.js') }}?v={{ filemtime(public_path('js/admin-variants.js')) }}" defer></script>
@@ -60,7 +62,18 @@
                 </label>
                 <label class="field"><span>Référence (SKU)</span><input type="text" name="sku" value="{{ old('sku', $product->sku) }}" required maxlength="40" @error('sku') aria-invalid="true" @enderror></label>
                 <label class="field"><span>Adresse de la page <em>(slug)</em></span><input type="text" name="slug" value="{{ old('slug', $product->slug) }}" placeholder="généré depuis le nom" @error('slug') aria-invalid="true" @enderror></label>
-                <label class="field span-2"><span>Description <em>(facultatif)</em></span><textarea name="description" rows="4">{{ old('description', $product->description) }}</textarea></label>
+                @php
+                    $writerOn = \App\Support\Content\DescriptionWriter::enabled();
+                    $writerConfig = ['type' => 'product', 'url' => route('admin.content.generate'), 'name' => '[name=name]', 'variant' => '[name=variant]', 'category' => '[name=category_id]', 'brand' => '[name=brand_id]',
+                        'auto' => $writerOn && (bool) \App\Models\Setting::get('writer_auto'), 'ignoreId' => $product->exists ? $product->id : null];
+                @endphp
+                <div class="field span-2" @if ($writerOn) data-writer="{{ json_encode($writerConfig) }}" @endif>
+                    <div class="rte-gen"><span>Description <em>(facultatif)</em></span>
+                        @if ($writerOn)<button type="button" class="btn btn-sm" data-writer-run title="Rédige une description unique à partir du nom, de la catégorie et de la marque"><x-admin.icon name="sparkles" :size="16" /> Rédiger automatiquement</button>@endif
+                    </div>
+                    <textarea name="description" rows="8" data-rich placeholder="Décrivez le produit : usage, avantages, conseils…">{{ old('description', $product->editorDescription()) }}</textarea>
+                    @error('description')<small class="err">{{ $message }}</small>@enderror
+                </div>
             </div>
         </section>
 

@@ -8,7 +8,7 @@
     @if ($post->cover)
         <img class="article-cover reveal" src="{{ $shop->imageUrl($post->cover) }}" alt="">
     @endif
-    <div class="prose reveal">
+    <div class="prose rich reveal">
         {{ $post->renderedBody() }}
     </div>
 

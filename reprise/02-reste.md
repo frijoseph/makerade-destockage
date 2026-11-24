@@ -13,6 +13,8 @@
 
 - Médiathèque : pas de sous-dossiers, pas encore de sélecteur pour les photos de variantes ni pour les images de bannières/logo des Paramètres. La limite d'envoi réelle dépend de PHP (`upload_max_filesize`, 2 Mo par défaut sous Herd) : la compression navigateur la contourne pour les images, pas pour les PDF.
 
+- Éditeur de texte : seuls les champs description produit, articles et pages l'utilisent (pas les descriptions de catégories, marques ni popups). Les textes générés sans API restent génériques : relire avant publication, ou configurer une clé IA pour des textes plus riches.
+
 ## Avant la mise en production
 - `APP_DEBUG=false`, `ADMIN_PASSWORD` fort, `APP_URL` en https, sessions sécurisées.
 - Brancher un vrai fournisseur d'e-mail pour la réinitialisation de mot de passe.

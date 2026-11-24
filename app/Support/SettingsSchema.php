@@ -244,6 +244,22 @@ class SettingsSchema
                     'media_product_folders' => ['type' => 'boolean', 'label' => 'Classer les photos des produits dans un dossier à leur nom', 'help' => 'Les photos envoyées depuis une fiche produit sont rangées automatiquement dans la médiathèque.', 'default' => true],
                 ],
             ],
+            'writer' => [
+                'label' => 'Rédaction automatique',
+                'icon' => 'sparkles',
+                'fields' => [
+                    'writer_enabled' => ['type' => 'boolean', 'label' => 'Activer la rédaction automatique', 'help' => 'Ajoute un bouton « Rédiger » aux descriptions de produits et aux articles. Chaque texte est unique : il dépend du nom saisi et n’est jamais identique à un texte déjà utilisé.', 'default' => true],
+                    'writer_auto' => ['type' => 'boolean', 'label' => 'Rédiger dès que le nom est saisi', 'help' => 'Quand la description (ou l’article) est vide, elle est rédigée automatiquement après la saisie du nom. Rien n’est jamais écrasé si vous avez déjà écrit vous-même.', 'default' => true],
+                    'writer_tone' => ['type' => 'select', 'label' => 'Ton des textes', 'default' => 'friendly', 'options' => ['friendly' => 'Chaleureux et convivial', 'professional' => 'Professionnel et sobre']],
+                    'writer_use_ai' => ['type' => 'boolean', 'label' => 'Utiliser l’IA quand elle est configurée', 'help' => 'Si l’assistant est en mode « IA avec clé API » (Paramètres › Assistant IA), le modèle rédige les textes ; sinon, ou en cas de panne, la rédaction intégrée sans API prend le relais.', 'default' => true],
+                    'writer_selling_points' => ['type' => 'list', 'label' => 'Arguments de vente de la boutique', 'help' => 'Un de ces arguments est glissé dans les points forts de chaque description. Placeholders : {shop_name}, {free_shipping_threshold}…', 'default' => [
+                        ['text' => 'Livraison rapide chez vous'],
+                        ['text' => 'Paiement à la livraison ou par Mobile Money'],
+                        ['text' => 'Prix déstockage sur de grandes marques'],
+                    ], 'fields' => ['text' => ['type' => 'text', 'label' => 'Argument']]],
+                    'writer_closing' => ['type' => 'textarea', 'label' => 'Phrase de conclusion (facultatif)', 'help' => 'Terminée chaque description. Vide = phrases d’invitation variées.', 'default' => ''],
+                ],
+            ],
             'emails' => [
                 'label' => 'E-mails',
                 'icon' => 'mail',

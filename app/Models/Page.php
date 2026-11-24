@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\PageType;
+use App\Support\RichText;
 use Database\Factories\PageFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
-use Illuminate\Support\Str;
 
 #[Fillable(['type', 'slug', 'title', 'tag', 'excerpt', 'body', 'cover', 'cover_color', 'icon', 'is_published', 'published_at'])]
 class Page extends Model
@@ -47,14 +48,29 @@ class Page extends Model
     }
 
     /**
-     * Body written in Markdown, with {placeholders} replaced by the current shop settings.
+     * The body is written in the rich text editor: it is cleaned before being saved (older Markdown is left as typed).
+     *
+     * @return Attribute<string|null, string|null>
+     */
+    protected function body(): Attribute
+    {
+        return Attribute::make(set: fn (?string $value): ?string => RichText::storable($value));
+    }
+
+    /**
+     * Editor HTML (or older Markdown), with {placeholders} replaced by the current shop settings.
      */
     public function renderedBody(): HtmlString
     {
-        return new HtmlString(Str::markdown(Setting::interpolate($this->body), [
-            'html_input' => 'strip',
-            'allow_unsafe_links' => false,
-        ]));
+        return RichText::render(Setting::interpolate((string) $this->body), markdown: true);
+    }
+
+    /**
+     * What the editor shows: older Markdown content is converted to formatted text.
+     */
+    public function editorBody(): string
+    {
+        return RichText::toHtml($this->body, markdown: true);
     }
 
     public function url(): string

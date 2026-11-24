@@ -7,6 +7,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Support\Catalog;
 use App\Support\Money;
+use App\Support\RichText;
 use App\Support\ShopSettings;
 use Illuminate\Support\Str;
 
@@ -269,7 +270,7 @@ class ChatBot
 
         return collect(Catalog::products())->map(function (array $product) use ($tokens): array {
             $name = Str::ascii(mb_strtolower($product['name']));
-            $haystack = Str::ascii(mb_strtolower(implode(' ', [$product['name'], $product['variant'] ?? '', $product['brand'] ?? '', $product['category'] ?? '', $product['description'] ?? ''])));
+            $haystack = Str::ascii(mb_strtolower(implode(' ', [$product['name'], $product['variant'] ?? '', $product['brand'] ?? '', $product['category'] ?? '', RichText::plain($product['description'] ?? '')])));
             $score = $tokens->sum(fn (string $token): int => str_contains($name, $token) ? 3 : (str_contains($haystack, $token) ? 1 : 0));
 
             return ['score' => $score, 'product' => $product];

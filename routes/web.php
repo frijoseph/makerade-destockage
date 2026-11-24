@@ -81,6 +81,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/media/optimize', [Admin\MediaController::class, 'optimize'])->middleware('throttle:6,1')->name('media.optimize');
         Route::get('/media/zip/{folder}', [Admin\MediaController::class, 'zip'])->name('media.zip');
 
+        Route::post('/content/generate', [Admin\ContentWriterController::class, 'generate'])->middleware('throttle:40,1')->name('content.generate');
+
         Route::get('/profile', [Admin\ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [Admin\ProfileController::class, 'update'])->name('profile.update');
         Route::put('/profile/password', [Admin\ProfileController::class, 'password'])->middleware('throttle:6,1')->name('profile.password');

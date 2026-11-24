@@ -45,7 +45,8 @@
                     @endfor
                 </div>
             @endif
-            <p class="desc">{{ ! empty($product['description']) ? $product['description'] : $shop->text('product_default_description') }}</p>
+            @php $descriptionText = ! empty($product['description']) ? $product['description'] : $shop->text('product_default_description'); @endphp
+            <div class="desc rich">{{ \App\Support\RichText::render($descriptionText) }}</div>
             @php $stock = $product['stock'] ?? null; @endphp
             <p class="stock-t" id="pdStock" @if (! $variants) hidden @endif></p>
             @if ($variants)

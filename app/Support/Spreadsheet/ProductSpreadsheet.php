@@ -11,6 +11,7 @@ use App\Models\User;
 use App\StockMovementType;
 use App\Support\Inventory;
 use App\Support\ProductVariants;
+use App\Support\RichText;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -100,7 +101,7 @@ class ProductSpreadsheet
             $product->sku, $product->name, $product->variant, $product->category?->name, $product->brand?->name,
             (float) $product->price, $product->old_price !== null ? (float) $product->old_price : null,
             $product->cost_price !== null ? (float) $product->cost_price : null,
-            $product->stock, $product->low_stock_threshold, $product->description,
+            $product->stock, $product->low_stock_threshold, RichText::plain($product->description),
             $product->is_active ? 'oui' : 'non', $product->is_new ? 'oui' : 'non', $product->is_hot ? 'oui' : 'non',
             implode(' | ', (array) $product->option_names),
         ])->all();
@@ -294,7 +295,8 @@ class ProductSpreadsheet
                 if ($has('low_stock_threshold') && ($cells['low_stock_threshold'] ?? '') !== '') {
                     $attributes['low_stock_threshold'] = (int) self::number($cells['low_stock_threshold']);
                 }
-                if ($has('description')) {
+                // The sheet holds the description as plain text: an unchanged cell must not flatten the formatting written in the editor.
+                if ($has('description') && ($isNew || trim((string) ($cells['description'] ?? '')) !== RichText::plain($product->description))) {
                     $attributes['description'] = ($cells['description'] ?? '') !== '' ? $cells['description'] : null;
                 }
                 foreach (['visible' => 'is_active', 'is_new' => 'is_new', 'is_hot' => 'is_hot'] as $key => $column) {
